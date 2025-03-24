@@ -1,0 +1,53 @@
+---
+
+# specify parameters file
+configfile: "config/config.yaml"
+
+# What is Submitted
+cluster-generic-submit-cmd:
+  mkdir -p results/logs/slurm/{rule} &&
+  sbatch
+    --parsable
+    --partition={resources.partition}
+    --time={resources.runtime}
+    --mem={resources.mem_mb}
+    --cpus-per-task={threads}
+    --job-name=smk.{rule}.{wildcards}
+    --output=results/logs/slurm/{rule}/{rule}-{wildcards}-%j.out
+    --error=results/logs/slurm/{rule}/{rule}-{wildcards}-%j.err
+#export OPENBLAS_NUM_THREADS={cluster.n} &&
+  
+# Snakemake config general arguments
+keep-going: True
+printshellcmds: True
+show-failed-logs: True
+software-deployment-method: conda
+use-conda: True
+
+# Cluster Specific Arguments
+executor: slurm
+jobs: 16
+latency-wait: 60
+restart-times: 0
+scheduler: greedy
+max-jobs-per-second: 16
+#max-status-checks-per-second: 1
+local-cores: 1 #not used in slurm nodes. for login node
+#cluster-config: cluster.json
+
+# # Cluster Monitoring so that we don't re-run processes that fail
+cluster-generic-status-cmd: "slurm/status.py"
+jobname: "smk.{rulename}.{jobid}"
+
+# resources used for a single job
+default-resources:
+  - cpus=1
+  - mem_mb=2000
+  - runtime=30m
+
+#  # max cap on resources, but need to specify "resources" in rules
+# resources:
+#   - cpus=32
+#   - mem_mb=10000 
+
+

@@ -1,0 +1,199 @@
+---
+title: |
+  |
+  | GENOME SEQUENCING REPORT 
+  |
+subtitle: "Output by the **venae** pipeline"
+date: "`r Sys.Date()`"
+pagetitle: "`r paste(params$runname, params$hour)`"
+
+output:
+  bookdown::html_document2:
+    keep_md: no
+    code_folding: hide
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    self_contained: true
+    
+params:
+  reads: "x"
+  fail: "x"
+  staramr: "x"
+  amrfinder: "x"
+  kmer: "x"
+  cgekey: "x"
+---
+
+```{r setup_amr, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, error=FALSE)
+
+library(here)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(formattable)
+library(kableExtra)
+library(tibble)
+
+failed <- read_tsv(here(params$fail), col_names = "sample", col_types = "c")
+failed_samples <- failed %>% pull(sample)
+
+```
+
+&nbsp;
+
+## ANTIMICROBIAL RESISTANCE  {-}
+
+
+`r if(file.size(here(params$fail)) == 0L){"All samples had enough reads for assembly-based antmicrobial resistance gene detection with StarAMR and AMRFinder"} else {paste("**NOTE**: The following sample(s) did not have enough reads for assembly-based antimicrobial resistance gene detection with StarAMR and AMRFinder:", paste(unlist(failed %>% pull(sample)), collapse=", "))}`
+
+### StarAMR (assembly-based) {-}
+
+```{r staramr2, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis'}
+
+if(file.size(here(params$staramr)) == 0){
+
+  cat(paste("Not enough data to perform assembly-based antimicrobial resistance gene detection in any sample."))
+  
+} else {
+  
+  df <- import_staramr(here(params$staramr)) 
+
+  df2 <- df %>% 
+    select(sample, data, perc_ident, perc_coverage, cge_phenotype) %>% 
+    arrange(sample, data) %>%
+    filter(!str_detect(data, "Oqx|oqx")) %>%
+    filter(data != "sitABCD") 
+
+  # import read data to get complete list of samples but removing those that failed assembly
+  samples <- import_sample_names(here(params$samplenames)) %>%
+    filter(!(sample %in% failed_samples)) 
+
+  # format table
+  df3 <- left_join(samples, df2, by = "sample") %>% 
+    select(Sample = sample, Gene = data, `Percent identity (%)` = perc_ident, `Percent coverage (%)` = perc_coverage, `Predicted resistance phenotype` = cge_phenotype) %>% 
+    mutate(`Percent identity (%)` = color_code_gene_percentage(`Percent identity (%)`, 98)) %>%
+    mutate(`Percent coverage (%)` = color_code_gene_percentage(`Percent coverage (%)`, 90)) %>%
+    mutate(Gene = ifelse(is.na(Gene), "None", Gene)) %>% 
+    mutate(Gene = ifelse(Gene != "None" & !is.na(Gene), cell_spec(Gene, "html", bold = TRUE), cell_spec(Gene, "html"))) 
+    
+  # add footnotes
+  names(df3)[4] <- paste0(names(df3)[4], footnote_marker_symbol(1))
+  names(df3)[3] <- paste0(names(df3)[3], footnote_marker_symbol(1))
+  names(df3)[5] <- paste0(names(df3)[5], footnote_marker_symbol(2))
+    
+  df3 %>% 
+    # mutate(`Number of reads` = color_bar("orange")(`Number of reads`)) %>% 
+    kable("html", escape = "F", digits = 2, align = "l", caption = "Antimicrobial resistance genes detected by StarAMR") %>% 
+    kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+    scroll_box(height = "500px") %>% 
+    footnote(symbol = c("Percent identity and percent coverage are relative to the StarAMR reference gene. Percent identity below 98 % and percent coverage below 90% are flagged in red and should be interpreted with caution.\n", "Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database and does not represent all resistant determinants or point mutations. These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial."))
+}
+```
+
+<!---### AMRFinderPlus {-}--->
+
+```{r amrfinder, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis', eval = FALSE}
+
+if(file.size(here(params$staramr)) == 0){
+
+  cat(paste("Not enough data to perform assembly-based antimicrobial resistance gene detection in any sample."))
+  
+} else {
+
+  amrf <- read_tsv(here(params$amrfinder), col_types = "c", col_names = c("Isolate"), skip = 1)
+
+  # If no ARGs detected in any isolates
+  # if(file.size(here(params$amrfinder)) != 0)
+  if (dim(amrf)[1] == 0){
+    cat(paste("No antimicrobial resistance genes detected in any sample."))
+    
+  } else {
+
+  df <- read_tsv(here(params$amrfinder), col_types = "c_____c__c_c____dd______", col_names = c("sample", "data", "data_type", "class", "perc_coverage", "perc_ident")) %>% 
+    filter(data_type == "AMR") %>% 
+    mutate(class = tolower(class)) %>% 
+    select(sample, data, class, perc_ident, perc_coverage) %>% 
+    arrange(sample, data)
+
+  # import read data to get complete list of samples but removing those that failed assembly
+  samples <- import_sample_names(here(params$samplenames)) %>%
+    filter(!(sample %in% failed_samples)) 
+
+  # format table
+  df3 <- left_join(samples, df, by = "sample") %>% 
+    mutate(class = str_to_title(class)) %>% 
+    distinct() %>%
+    select(Sample = sample, Gene = data, `Percent identity (%)` = perc_ident, `Percent coverage (%)` = perc_coverage, `Drug class` = class) %>% 
+    mutate(`Percent identity (%)` = color_code_gene_percentage(`Percent identity (%)`, 98)) %>%
+    mutate(`Percent coverage (%)` = color_code_gene_percentage(`Percent coverage (%)`, 90)) %>%
+    mutate(Gene = ifelse(is.na(Gene), "None", Gene)) %>% 
+    mutate(Gene = ifelse(Gene != "None" & !is.na(Gene), cell_spec(Gene, "html", bold = TRUE), cell_spec(Gene, "html"))) 
+    
+  # add footnotes
+  names(df3)[4] <- paste0(names(df3)[4], footnote_marker_symbol(1))
+  names(df3)[3] <- paste0(names(df3)[3], footnote_marker_symbol(1))
+    
+  df3 %>% 
+    # mutate(`Number of reads` = color_bar("orange")(`Number of reads`)) %>% 
+    kable("html", escape = "F", digits = 2, align = "l", caption = "Antimicrobial resistance genes detected by AMRFinderPlus") %>% 
+    kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+    scroll_box(height = "500px") %>% 
+    footnote(symbol = c("Percent identity and percent coverage are relative to the AMRFinderPlus reference gene. Percent identity below 98 % and percent coverage below 90% are flagged in red and should be interpreted with caution."))
+  }
+}
+```
+
+### KmerResistance (read-based) {-}
+
+```{r kmerres, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis'}
+
+if(file.size(here(params$kmer)) == 0){
+
+  cat(paste("Not enough data to perform read-based antimicrobial resistance gene detection in any sample."))
+  
+} else {
+  
+  df <- read_tsv(here(params$kmer), col_types = "cccc__ddd__d_", col_names = c("sample", "data", "score", "expected", "p_value", "perc_ident", "perc_coverage", "depth")) %>% 
+  filter(!str_detect(data, "\\.")) %>% 
+  select(sample, data, perc_ident, perc_coverage) %>% 
+  arrange(sample, data)
+
+  # import read data to get complete list of samples 
+  samples <- import_sample_names(here(params$samplenames)) %>%
+    arrange(sample) 
+
+  # import CGE key
+  cge_key <- read_tsv(here(params$cgekey), col_names = c("data", "class", "phenotype", "PMID", "mechanism", "notes", "required_gene")) %>% 
+    select(data, class, phenotype, notes)
+
+  # join kmerRes data to CGE key to get predicted phenotype for each gene
+  df2 <- left_join(df, cge_key, by = join_by(data), relationship = "many-to-many") %>%
+      filter(!str_detect(data, "Oqx|oqx"))
+
+  # format table
+  df3 <- left_join(samples, df2, by = "sample") %>% 
+    select(Sample = sample, Gene = data, `Percent identity (%)` = perc_ident, `Percent coverage (%)` = perc_coverage, `Predicted resistance phenotype` = phenotype) %>% 
+    mutate(`Percent identity (%)` = color_code_gene_percentage(`Percent identity (%)`, 98)) %>%
+    mutate(`Percent coverage (%)` = color_code_gene_percentage(`Percent coverage (%)`, 90)) %>%
+    mutate(Gene = ifelse(is.na(Gene), "None", Gene)) %>% 
+    mutate(Gene = ifelse(Gene != "None" & !is.na(Gene), cell_spec(Gene, "html", bold = TRUE), cell_spec(Gene, "html"))) 
+    
+  # add footnotes
+  names(df3)[4] <- paste0(names(df3)[4], footnote_marker_symbol(1))
+  names(df3)[3] <- paste0(names(df3)[3], footnote_marker_symbol(1))
+  names(df3)[5] <- paste0(names(df3)[5], footnote_marker_symbol(2))
+    
+  df3 %>% 
+    # mutate(`Number of reads` = color_bar("orange")(`Number of reads`)) %>% 
+    kable("html", escape = "F", digits = 2, align = "l", caption = "Antimicrobial resistance genes detected by KmerResistance") %>% 
+    kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+    scroll_box(height = "500px") %>% 
+    footnote(symbol = c("Percent identity and percent coverage are relative to the Centre for Genomic Epidemiology ResFinder database. Percent identity below 98 % and percent coverage below 90 % are flagged in red and should be interpreted with caution.", "Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database and does not represent all resistant determinants or point mutations. These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial."))
+}
+
+```

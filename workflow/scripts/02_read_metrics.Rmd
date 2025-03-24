@@ -1,0 +1,233 @@
+---
+title: |
+  |
+  | GENOME SEQUENCING REPORT 
+  |
+subtitle: "Output by the **venae** pipeline"
+date: "`r Sys.Date()`"
+pagetitle: "`r paste(params$runname, params$hour)`"
+
+output:
+  bookdown::html_document2:
+    keep_md: no
+    code_folding: hide
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    self_contained: true
+    
+params:
+  reads: "x"
+  readsfilt: "x"
+  spp: "x"
+  genomesize: "x"
+  sppproportion: "x"
+  minreadnumqc: "x"
+  coverage: "x"
+  checkm: "x"
+---
+
+```{r readsetup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(formattable)
+library(kableExtra)
+library(tibble)
+
+```
+
+&nbsp;
+
+## SEQUENCING METRICS {-}
+
+Sequencing read quality and length metrics are found in Table \@ref(tab:readbases). 
+
+```{r readbases, message=FALSE, echo=FALSE, warning=FALSE}
+
+# import read file to get list of all sample names
+samples <- import_sample_names(here(params$samplenames))
+
+# import sylph data and filter for order, genus, and spp
+sylph <- import_sylph_tax(here(params$sylph)) %>%
+  filter(sequence_abundance > as.integer(params$sppproportion))
+
+
+# import ncbi genome size list
+ncbi <- read_tsv(here(params$genomesize)) %>%
+  select(!num_genomes)
+
+# if samples are missing from sylph due to low number of reads, add in kraken2 data
+missing <- get_missing_samples(samples, sylph) # these samples selected for kraken2
+
+# if samples are missing ID in sylph, replace with kraken2 data
+if(length(missing) > 0){
+
+  # import kraken2 data
+  spp_list <- list()
+  spp_files <- strsplit(params$spp, "\\s+")[[1]]
+
+  for (i in 1:length(spp_files)) {
+      if(file.size(here(spp_files[i])) == 0){
+        next
+      
+        } else {
+          spp_list[[i]] <- import_kraken2_tax(here(spp_files[i]))
+        }
+  }
+
+  # create an empty file if no samples have any organism assigned
+  if(nrow(bind_rows(spp_list)) == 0){
+    tab <- samples %>% 
+    add_column(organism = NA, 
+            poly = NA, 
+            clsi = NA, 
+            genome_size = NA) %>%
+    mutate(organism = ifelse(sample %in% missing, paste0(organism, "*"), organism)) # to flag samples ID'd with kraken2
+
+  } else {
+    
+    # combine into one file and filter for those that are missing
+    spp <- bind_rows(spp_list) %>% 
+      filter(sample %in% missing) %>%
+      select(sample, level, org, proportion, count) %>%
+      filter(level == "S") %>%
+      mutate(level = ifelse(level == "S", "species", "unclassified")) %>%
+      filter((proportion > as.integer(params$sppproportion)) & (count > as.integer(params$minreadnumqc))) %>%
+      mutate(genus = gsub(" .*$", "", org)) %>% 
+      select(sample, species = org, genus) 
+
+    # combine kraken2 with sylph and assign genome size
+    if (nrow(spp) == 0){
+      tab <- samples %>% 
+        left_join(sylph, by = "sample") %>% 
+        left_join(ncbi, by = "genus") %>%
+        group_by(sample) %>% 
+        summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+        ungroup() %>%
+        mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no")))     
+    } else {
+
+      tab <- samples %>% 
+        left_join(sylph, by = "sample") %>% 
+        left_join(spp, by = c("sample")) %>%
+        mutate(genus = ifelse(is.na(genus.x), genus.y, genus.x)) %>%
+        mutate(species = ifelse(is.na(species.x), species.y, species.x)) %>%
+        select(sample, genus, species) %>%
+        left_join(ncbi, by = "genus") %>%
+        group_by(sample) %>% 
+        summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+        ungroup() %>%
+        mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no")))     
+    }  
+  }
+
+} else {
+  
+  # join genome size to sylph
+  tab <- samples %>%
+    left_join(sylph, by = "sample") %>%
+    left_join(ncbi, by = "genus") %>%
+    group_by(sample) %>% 
+    summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+    ungroup() %>% 
+    mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no"))) 
+
+}
+
+
+# import read metrics 
+read <- read_tsv(here(params$readsfilt), col_types = "cciiiiiiidd") %>% 
+  filter(filtering == "1k") %>%
+  mutate(sample = str_remove(sample, "results/")) %>%
+  select(sample, `Total bases` = bases, `Number of reads` = reads, `Mean read length` = mean_length, `Read length N50` = n50, `Mean read quality` = mean_quality, `Median read length` = median_length, `Median read quality` = median_quality) %>%
+  arrange(sample) 
+
+read2 <- import_read_metrics(here(params$reads)) %>% 
+  select(sample, num_reads_pre_filter = `Number of reads`, total_bases_pre_filter = `Total bases`) 
+
+all_reads <- left_join(read, read2, by = "sample")
+
+
+# to import checkm results:
+if(file.size(here(params$checkm)) == 0){
+      
+        checkm <- tibble(sample = character(), completeness = double(), contamination=double()) 
+    
+      } else {
+        
+        checkm <- read_tsv(here(params$checkm), col_types = "cdd___________", col_names = c("sample", "completeness", "contamination"), skip = 1) %>% 
+          mutate(sample = str_remove_all(sample, "_flye")) %>% 
+          select(sample, completeness, contamination)
+      }
+
+all <- left_join(tab, checkm, by = "sample") %>% 
+  mutate(completeness = case_when(
+          organism == "Nakaseomyces glabratus" ~ NA,
+          str_detect(organism, "Candida") ~ NA,
+          poly == "yes" ~ NA,
+          TRUE ~ completeness
+  )) %>% 
+  mutate(contamination = case_when(
+          organism == "Nakaseomyces glabratus" ~ NA,
+          str_detect(organism, "Candida") ~ NA,
+          poly == "yes" ~ NA,
+          TRUE ~ contamination
+  )) %>%
+  select(!c("organism", "poly"))
+
+# import coverage metrics
+cov <- read_tsv(here(params$coverage), col_types = "cdd", col_names = c("sample", "avg_cov", "size")) %>%
+  mutate(sample = str_remove(sample, "_flye")) 
+cov2 <- left_join(all, cov, by = "sample")
+
+
+# read metrics
+read_sample <- left_join(cov2, all_reads, by = "sample") %>% 
+  mutate(`Assembled depth of coverage (fold)` = round(avg_cov, digits = 1)) %>%
+  mutate(`Estimated depth of coverage (fold)` = round(ifelse(!is.na(genome_size), (`total_bases_pre_filter` / (genome_size*1000000)), NA ), digits = 1)) %>% 
+  mutate(`Assembled size (Mb)` = round((size / 1000000), digits = 1)) %>%
+  mutate(completeness = round(completeness, digits = 1)) %>%
+  mutate(`Median read length` = `Median read length` / 1000) %>% 
+  mutate(`% reads > 1 kb and Q-score > 10` = round((`Number of reads` / num_reads_pre_filter) * 100, digits = 1)) %>%
+  mutate(`% bases > 1 kb and Q-score > 10` = round((`Total bases` / total_bases_pre_filter) * 100, digits = 1)) %>%
+  select(Sample = sample, `Completeness (%)` = completeness, `Assembled depth of coverage (fold)`, `Assembled size (Mb)`,  `Estimated depth of coverage (fold)`, `Estimated size (Mb)` = genome_size, `% reads > 1 kb and Q-score > 10`, `% bases > 1 kb and Q-score > 10`, `Number of reads > 1 kb` = `Number of reads`, `Median read length (kb)` = `Median read length`, `Median read quality (Q-score)` = `Median read quality`) %>% 
+  #mutate(`Number of reads > 1 kb` = color_bar("orange")(`Number of reads > 1 kb`)) %>% 
+  mutate(`Estimated depth of coverage (fold)` = ifelse(`Estimated depth of coverage (fold)` < 5, cell_spec(`Estimated depth of coverage (fold)`, "html", color = "#F8766D", bold = TRUE), 
+                                                  ifelse(`Estimated depth of coverage (fold)` < 10, cell_spec(`Estimated depth of coverage (fold)`, "html", color = "#DEBC14", bold = TRUE), cell_spec(`Estimated depth of coverage (fold)`, "html", color = "#00BFC4", bold = TRUE)))) 
+
+# add footnotes
+names(read_sample)[2] <- paste0(names(read_sample)[2], footnote_marker_symbol(1))
+names(read_sample)[3] <- paste0(names(read_sample)[3], footnote_marker_symbol(2))
+names(read_sample)[5] <- paste0(names(read_sample)[5], footnote_marker_symbol(3))
+names(read_sample)[6] <- paste0(names(read_sample)[6], footnote_marker_symbol(4))
+
+# output final table 
+kable(read_sample, "html", escape = "F", digits = 2, caption="Sequencing quality and read length metrics", align = "lrrrrrrrrrr") %>% 
+  add_header_above(c(" " = 1, "Real-time genome assembly stats" = 3, "Estimated genome assembly stats" = 2, "Read and Q-scores" = 5)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+  scroll_box(height = "500px", width = "100%") %>% 
+  column_spec(1, width_min = "4cm") %>%
+  column_spec(2, width_min = "3cm") %>%
+  column_spec(3, width_min = "4cm") %>%
+  column_spec(4, width_min = "2cm") %>%
+  column_spec(5, width_min = "4cm") %>%
+  column_spec(6, width_min = "2cm") %>%
+  column_spec(7, width_min = "4cm") %>%
+  column_spec(8, width_min = "4cm") %>%
+  column_spec(9, width_min = "3cm") %>%
+  column_spec(10, width_min = "3cm") %>%
+  column_spec(11, width_min = "3.5cm") %>%
+  footnote(symbol = c("Assembly completeness values are derived from CheckM2. NA indicates no assembly for this isolate or that this isolate is a polymicrobial culture or fungus. Note AMR phenotypes may be missing if completeness < 90 %.\n",
+  "Assembled depth of coverage was determined by mapping reads to the assembled genome.", 
+  "Estimated genome depth of coverage was determined by dividing total bases sequenced by estimated genome size (varies per organism). Values below 5X are flagged in red and values below 10X are flagged in yellow. NA indicates not enough reads to identify an organism in that sample.\n",
+  "Estimated size was obtained from the average size of all assembled RefSeq genomes for each genus in the Bacteria (taxid:2) dataset from the National Center for Biotechnology Information (NCBI). The estimated size is a sum of genome sizes for all organisms found in the sample."))
+
+```
+

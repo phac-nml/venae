@@ -1,0 +1,187 @@
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#
+# PURPOSE: This Snakefile runs the complete venae pipeline and
+#      outputs a final HTML report.
+# AUTHOR: Nicole Lerminiaux <nicole.lerminiaux@phac-aspc.gc.ca>
+#
+# COMMAND LINE USAGE:
+#
+# snakemake --help
+# snakemake --profile [PROFILE] --cores [CORES]
+# snakemake --profile [PROFILE] --cores [CORES] --conda-prefix [PATH]
+# snakemake --profile [PROFILE] --cores [CORES] --configfile [FILE]
+#
+# EXAMPLE:
+#
+# snakemake --profile slurm --cores 16
+#
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+# Import required python libraries
+import pathlib
+import csv
+import pandas as pd
+from snakemake.utils import validate
+import os
+
+# Specify shell executable location
+shell.executable("/bin/bash")
+
+
+# Specify config file
+configfile: os.path.join("config", "config.yaml")
+
+
+# Get CLSI table paths from resources
+resourcedir = pathlib.Path("resources")
+resourcepaths = resourcedir.glob("Table1*.tsv")
+clsitables = set([x.stem.split(".tsv")[0] for x in resourcepaths])
+
+# Get name of results output folder from config file
+output_dir = config["OUTPUT_FOLDER_NAME"]
+output_dir_logs = os.path.join(output_dir, "logs")
+output_dir_benchmarks = os.path.join(output_dir, "benchmarks")
+
+# Get name of final report file from config file
+output_report = f"{config["OUTPUT_REPORT_NAME"]}.html"
+
+# Get CGE key filename from resources folder
+resourcepaths = resourcedir.glob("cge_key*phenotypes.txt")
+
+# Get list of sample names from config file
+samples = (
+    pd.read_csv(config["SAMPLES"], sep="\t", dtype={"sample": str})
+    .set_index("sample", drop=False)
+    .sort_index()
+)
+
+
+wildcard_constraints:
+    sample="|".join(samples["sample"]),
+
+
+# Validate sample input
+validate(samples, schema=os.path.join("schemas", "samples.schema.yaml"))
+
+# Validate config input
+validate(config, schema=os.path.join("schemas", "config.schema.yaml"))
+
+# Validate databases paths and files
+assert os.path.isdir(
+    config["DATABASES"]["NOHUMAN_DB"].strip()
+), f"NOHUMAN_DB path \"{config['DATABASES']['NOHUMAN_DB']}\" does not exist; please check the database path in the config.yaml file"
+assert os.path.isdir(
+    config["DATABASES"]["KRAKEN2_DB"].strip()
+), f"KRAKEN2_DB path \"{config['DATABASES']['KRAKEN2_DB']}\" does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["CHECKM2_DB"].strip()
+), f"CHECKM2_DB file \"{config['DATABASES']['CHECKM2_DB']}\" does not exist; please check the file path in the config.yaml file"
+assert os.path.isfile(
+    f"{config['DATABASES']['KMERRESISTANCE_DB_ARG'].strip()}.comp.b"
+), f"KMERRESISTANCE_DB_ARG database prefix path \"{config['DATABASES']['KMERRESISTANCE_DB_ARG']}\" does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    f"{config['DATABASES']['KMERRESISTANCE_DB_SPP'].strip()}.comp.b"
+), f"KMERRESISTANCE_DB_SPP database prefix path \"{config['DATABASES']['KMERRESISTANCE_DB_SPP']}\" does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["SYLPH_DB_BAC"].strip()
+), f"SYLPH_DB_BAC \"{config['DATABASES']['SYLPH_DB_BAC']}\" file does not exist; please check the file path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["SYLPH_DB_FUNGI"].strip()
+), f"SYLPH_DB_FUNGI \"{config['DATABASES']['SYLPH_DB_FUNGI']}\" path does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["SYLPH_TAX_BAC"].strip()
+), f"SYLPH_TAX_BAC \"{config['DATABASES']['SYLPH_TAX_BAC']}\" path does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["SYLPH_TAX_FUNGI"].strip()
+), f"SYLPH_TAX_FUNGI \"{config['DATABASES']['SYLPH_TAX_FUNGI']}\" path does not exist; please check the database path in the config.yaml file"
+assert os.path.isfile(
+    config["DATABASES"]["EMMTYPER_DB"].strip()
+), f"EMMTYPER_DB \"{config['DATABASES']['EMMTYPER_DB']}\" path does not exist; please check the database path in the config.yaml file"
+
+
+# Include rules
+include: os.path.join("rules", "spp.smk")
+include: os.path.join("rules", "assembly.smk")
+include: os.path.join("rules", "functions.smk")
+include: os.path.join("rules", "amr.smk")
+include: os.path.join("rules", "qc.smk")
+include: os.path.join("rules", "typing.smk")
+
+
+localrules:
+    all,
+
+
+rule all:
+    input:
+        os.path.join(output_dir, "qc_host_removed.tsv"),
+        output_report,
+
+
+rule generate_report:
+    conda:
+        "envs/r_env_report.yml"
+    input:
+        rmd=os.path.join("workflow", "scripts", "00_report.Rmd"),
+        spp=expand(
+            os.path.join(output_dir, "{sample}_spp.tsv"), sample=samples["sample"]
+        ),
+        sylph=os.path.join(output_dir, "spp_sylph_taxonomy.tsv"),
+        reads=os.path.join(output_dir, "qc_read_metrics_clean.tsv"),
+        readsfilt=os.path.join(output_dir, "qc_read_metrics_cleanfilt.tsv"),
+        genomesize=os.path.join("resources", "ncbi_genus_size.tsv"),
+        coverage=os.path.join(output_dir, "qc_assembly_coverage.tsv"),
+        failed=os.path.join(output_dir, "qc_failed_assemblies.txt"),
+        staramr=os.path.join(output_dir, "amr_staramr_detailed_summary.tsv"),
+        kmer=os.path.join(output_dir, "amr_kmerresistance_summary.tsv"),
+        clsi=expand(os.path.join("resources", "{clsitable}.tsv"), clsitable=clsitables),
+        clsikey=os.path.join("resources", "clsi_key.txt"),
+        cgekey=os.path.join("resources", "cge_key_20240612_phenotypes.txt"),
+        vfdb=os.path.join(output_dir, "typing_staph_aureus_toxins.tsv"),
+        emm=os.path.join(output_dir, "typing_strep_pyo_emm.tsv"),
+        checkm=os.path.join(output_dir, "qc_assembly_checkm2.tsv"),
+    output:
+        output_report,
+    params:
+        hour=config["REPORT"]["TIMEPOINT"],
+        runname=config["REPORT"]["RUNNAME"],
+        samplenames=config["SAMPLES"],
+        sppproportion=config["REPORT"]["SPP_DETECTION_PERCENT_THRESHOLD"],
+        minreadnumqc=config["REPORT"]["SPP_MIN_NUM_READS_THRESHOLD"],
+        minreadqscore=config["REPORT"]["MIN_READ_QSCORE"],
+        minreadlength=config["REPORT"]["MIN_MEDIAN_READ_LENGTH_BP"],
+    log:
+        os.path.join(output_dir_logs, "generate_report", "rmarkdown.out"),
+    benchmark:
+        os.path.join(
+            output_dir_benchmarks, "generate_report", "generate_report_benchmark.out"
+        )
+    shell:
+        """
+        (Rscript --vanilla -e 'rmarkdown::render("{input.rmd}", \
+            params=list( \
+                hour="{params.hour}", \
+                runname="{params.runname}", \
+                sppproportion="{params.sppproportion}", \
+                minreadnumqc="{params.minreadnumqc}", \
+                minreadqscore="{params.minreadqscore}", \
+                minreadlength="{params.minreadlength}", \
+                samplenames="{params.samplenames}", \
+                spp="{input.spp}", \
+                sylph="{input.sylph}", \
+                reads="{input.reads}", \
+                readsfilt="{input.readsfilt}", \
+                coverage="{input.coverage}", \
+                genomesize="{input.genomesize}", \
+                failed="{input.failed}", \
+                staramr="{input.staramr}", \
+                kmer="{input.kmer}", \
+                cgekey="{input.cgekey}", \
+                clsikey="{input.clsikey}", \
+                checkm="{input.checkm}", \
+                vfdb="{input.vfdb}", \
+                emm="{input.emm}", \
+                clsi="{input.clsi}"),
+            output_file = "{output}")' ) &> {log}
+        mv workflow/scripts/{output} {output}
+        """

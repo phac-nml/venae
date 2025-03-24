@@ -1,0 +1,45 @@
+---
+SAMPLES: config/samples.tsv
+
+OUTPUT_FOLDER_NAME: "results"
+OUTPUT_REPORT_NAME: "report"
+
+PARAMS:
+    NOHUMAN: "-v"
+    NANOQ_SPP: "-l 2000 -q 10"
+    NANOQ_ASSEMBLY: "-l 1000 -q 10"
+    NANOPLOTFORMAT: "--fastq"
+    NANOPLOT: "--loglength --no_static"
+    KRAKEN2: "--use-names"
+    SYLPH_SKETCH: "-c 200"
+    SYLPH_PROFILE: "-u"
+    SYLPH_TAX: ""
+    FLYE: "--meta --nano-hq"
+    CHECKM2: "-x fasta --remove_intermediates --force"
+    COVERM: "mean length --min-covered-fraction 0"
+    STARAMR: "--pid-threshold 90"
+    KMERRESISTANCE: "-ont"
+    QUAST: "--min-contig 0"
+    STAPH_AUREUS_TYPING: ""
+    STREP_PYOGENES_TYPING: "--output-format verbose"
+
+REPORT:
+    SPP_DETECTION_PERCENT_THRESHOLD: 2
+    SPP_MIN_NUM_READS_THRESHOLD: 10
+    MIN_READ_QSCORE: 10
+    MIN_MEDIAN_READ_LENGTH_BP: 500
+    TIMEPOINT: "3h"
+    RUNNAME: "20231220"
+
+DATABASES:
+    NOHUMAN_DB: "resources/db_nohuman/db/"
+    KRAKEN2_DB: "resources/db_k2_pluspf_08gb_20241228/"
+    CHECKM2_DB: "resources/db_checkm2/CheckM2_database/uniref100.KO.1.dmnd"
+    KMERRESISTANCE_DB_ARG: "resources/db_kmerresistance/resfinder_v2.4.0"
+    KMERRESISTANCE_DB_SPP: "resources/db_kmerresistance/species_placeholder"
+    SYLPH_DB_BAC: "resources/db_sylph/gtdb-r220-c200-dbv1.syldb"
+    SYLPH_DB_FUNGI: "resources/db_sylph/fungi-refseq-2024-07-25-c200-v0.3.syldb"
+    SYLPH_TAX_BAC: "resources/db_sylph-tax/gtdb_r220_metadata.tsv.gz"
+    SYLPH_TAX_FUNGI: "resources/db_sylph-tax/fungi_refseq_2024-07-25_metadata.tsv.gz"
+    EMMTYPER_DB: "resources/db_emmtyper/emm_types_20250131.fasta"
+

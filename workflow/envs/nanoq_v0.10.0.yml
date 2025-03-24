@@ -1,0 +1,10 @@
+name: nanoq_v0.10.0
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - libgcc=14.2.0=h77fa898_1
+  - libgomp=14.2.0=h77fa898_1
+  - nanoq=0.10.0=h7b50bb2_3

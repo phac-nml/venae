@@ -1,0 +1,33 @@
+level	clade_name	clsi_group
+order	Enterobacterales	enterobacterales
+genus	Stenotrophomonas	stenotrophomonas
+genus	Acinetobacter	acinetobacter
+genus	Shigella	salmonella_shigella
+genus	Salmonella	salmonella_shigella
+species	Pseudomonas aeruginosa	pseudomonas
+genus	Pseudomonas	non-enterobacterales
+genus	Chryseobacterium	non-enterobacterales
+genus	Alcaligenes	non-enterobacterales
+genus	Elizabethkingia	non-enterobacterales
+genus	Achromobacter	non-enterobacterales
+genus	Ralstonia	non-enterobacterales
+genus	Moraxella	non-enterobacterales
+genus	Flavobacterium	non-enterobacterales
+genus	Ochrobactrum	non-enterobacterales
+species	Streptococcus pneumoniae	streptococcus_pneumoniae
+species	Streptococcus pyogenes	streptococcus_GAS_GBS
+species	Streptococcus agalactiae	streptococcus_GAS_GBS
+genus	Enterococcus	enterococcus
+genus	Staphylococcus	staphylococcus
+species	Neisseria meningitidis	neisseria_meningitidis
+species	Haemophilus influenzae	haemophilus_influenzae
+species	Haemophilus parainfluenzae	haemophilus_influenzae
+species	Streptococcus mutans	streptococcus_VGS
+species	Streptococcus constellatus	streptococcus_VGS
+species	Streptococcus anginosus	streptococcus_VGS
+species	Streptococcus intermedius	streptococcus_VGS
+species	Streptococcus salivarius	streptococcus_VGS
+species	Streptococcus mitis	streptococcus_VGS
+species	Streptococcus sanguinis	streptococcus_VGS
+species	Streptococcus bovis	streptococcus_VGS
+species	Streptococcus vestibularis	streptococcus_VGS

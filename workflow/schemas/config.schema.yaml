@@ -1,0 +1,135 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+
+description: snakemake configuration file
+
+type: object
+
+properties:
+  SAMPLES:
+    type: string
+  OUTPUT_FOLDER_NAME:
+    type: string
+  OUTPUT_REPORT_NAME:
+    type: string
+
+  PARAMS:
+    type: object
+    properties:
+      NOHUMAN:
+        type: string
+      NANOQ_SPP:  
+        type: string
+      NANOQ_ASSEMBLY: 
+        type: string
+      NANOPLOTFORMAT: 
+        type: string
+      NANOPLOT: 
+        type: string
+      FLYE: 
+        type: string
+      KRAKEN2:
+        type: string
+      SYLPH_SKETCH:
+        type: string
+      SYLPH_PROFILE:
+        type: string
+      SYLPH_TAX:
+        type: string
+      CHECKM2:
+        type: string
+      COVERM: 
+        type: string
+      STARAMR: 
+        type: string
+      KMERRESISTANCE: 
+        type: string
+      QUAST: 
+        type: string
+      STAPH_AUREUS_TYPING:
+        type: string
+      STREP_PYOGENES_TYPING:
+        type: string
+    required:
+      - NOHUMAN
+      - NANOQ_SPP
+      - NANOQ_ASSEMBLY
+      - NANOPLOTFORMAT
+      - NANOPLOT
+      - FLYE
+      - KRAKEN2
+      - SYLPH_SKETCH
+      - SYLPH_PROFILE
+      - SYLPH_TAX
+      - CHECKM2
+      - COVERM
+      - STARAMR
+      - KMERRESISTANCE
+      - QUAST
+      - STAPH_AUREUS_TYPING
+      - STREP_PYOGENES_TYPING
+
+  REPORT:
+    type: object
+    properties:
+      SPP_DETECTION_PERCENT_THRESHOLD: 
+        type: integer
+      SPP_MIN_NUM_READS_THRESHOLD: 
+        type: integer
+      MIN_READ_QSCORE: 
+        type: integer
+      MIN_MEDIAN_READ_LENGTH_BP: 
+        type: integer
+      TIMEPOINT: 
+        type: string
+      RUNNAME: 
+        type: string
+    required:
+      - SPP_DETECTION_PERCENT_THRESHOLD
+      - SPP_MIN_NUM_READS_THRESHOLD
+      - MIN_READ_QSCORE
+      - MIN_MEDIAN_READ_LENGTH_BP
+      - TIMEPOINT
+      - RUNNAME
+
+  DATABASES:
+    type: object
+    properties:
+      NOHUMAN_DB:
+        type: string
+      KRAKEN2_DB:
+        type: string
+      CHECKM2_DB:
+        type: string
+      KMERRESISTANCE_DB_ARG: 
+        type: string
+      KMERRESISTANCE_DB_SPP: 
+        type: string
+      SYLPH_DB_BAC: 
+        type: string
+      SYLPH_DB_FUNGI: 
+        type: string
+      SYLPH_TAX_BAC: 
+        type: string
+      SYLPH_TAX_FUNGI: 
+        type: string
+      EMMTYPER_DB: 
+        type: string
+    required:
+      - NOHUMAN_DB
+      - KRAKEN2_DB
+      - CHECKM2_DB
+      - KMERRESISTANCE_DB_ARG
+      - KMERRESISTANCE_DB_SPP
+      - SYLPH_DB_BAC
+      - SYLPH_DB_FUNGI
+      - SYLPH_TAX_BAC
+      - SYLPH_TAX_FUNGI
+      - EMMTYPER_DB
+
+required:
+  - SAMPLES
+  - OUTPUT_FOLDER_NAME
+  - OUTPUT_REPORT_NAME
+  - PARAMS
+  - REPORT
+  - DATABASES

@@ -1,0 +1,181 @@
+---
+title: |
+  |
+  | GENOME SEQUENCING REPORT 
+  |
+subtitle: "Output by the **venae** pipeline"
+date: "`r Sys.Date()`"
+pagetitle: "`r paste(params$runname, params$hour)`"
+
+output:
+  bookdown::html_document2:
+    keep_md: no
+    code_folding: hide
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    self_contained: true
+    
+params:
+  hour: "x"
+  runname: "x"
+  sppproportion: "x"
+  minreadnumqc: "x"
+  minreadqscore: "x"
+  minreadlength: "x"
+  samplenames: "x"
+  spp: "x"
+  sylph: "x"
+  reads: "x"
+  readsfilt: "x"
+  coverage: "x"
+  genomesize: "x"
+  failed: "x"
+  staramr: "x"
+  amrfinder: "x"
+  kmer: "x"
+  clsi: "x"
+  clsikey: "x"
+  checkm: "x"
+  vfdb: "x"
+  emm: "x"
+  cgekey: "x"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(formattable)
+library(kableExtra)
+library(tibble)
+library(plotly)
+library(patchwork)
+
+source(here("workflow", "scripts", "functions.R"))
+```
+
+
+```{r child = "01_summary.Rmd"}
+```
+
+&nbsp;
+
+***
+
+# DETAILED RESULTS {-}
+
+```{r child = "02_read_metrics.Rmd"}
+```
+
+```{r child = "03_spp.Rmd"}
+```
+
+```{r child = "04_amr.Rmd"}
+```
+
+&nbsp;
+
+# METHODS {-}
+
+- Blood cultures flagged positive by the BACT/ALERT 3D automated microbial detection system (Biomerieux, Saint-Laurent, Canada) at HSC were aliquoted in vials sent to NML by courier
+- DNA was immediately extracted upon receipt using the [QIAamp BiOstic Bacteremia DNA Kit](https://www.qiagen.com/us/products/discovery-and-translational-research/dna-rna-purification/dna-purification/microbial-dna/qiaamp-biostic-bacteremia-dna-kit) (Qiagen) (approximate time: 2 h)
+- DNA was quantified on a Qubit using the Broad Range kit (approximate time: 15 mins)
+- The Rapid Barcoding Kit v14 (SQK-RBK114.24) was used for library preparation according to the manufacturer's instructions (approximate time: 2 h)
+- The final library was loaded onto a R10.4.1 flow cell (approximate time: 15 mins)
+- Data was basecalled using Dorado v0.9.0 and the SUP (super accurate model) basecalling model v5.0.0
+- The **venae** pipeline v0.1.0 managed by [Snakemake](https://snakemake.readthedocs.io/en/stable/index.html) was run to analyze the sequencing results and output this report
+- Human reads were removed and discarded with [NoHuman v0.3.0](https://github.com/mbhall88/nohuman) using the Kraken2 Human Pangenome Reference Consortium database: v1 (2023-09)
+- Samples passed quality control (QC) measures if all of the following criteria were met:
+  - More than `r as.integer(params$sppproportion)` % of reads and more than `r as.integer(params$minreadnumqc)` reads total mapped to one species 
+  - Median read length was > `r as.integer(params$minreadlength)` bases
+  - Median read quality Q-score was < `r as.integer(params$minreadqscore)` 
+- Assemblies were generated with [Flye v2.9.4](https://github.com/fenderglass/Flye) using reads that were >1 kb in length 
+- Species identification was performed with the following tools using reads that were >2 kb in length: 
+  - Level 1 identification for evaluting samples with low read counts: [Kraken2 v2.1.4](https://github.com/DerrickWood/kraken2) using the plusPF-2024-09-04-16Gb database
+  - Level 2 identification for evaluating samples with high read counts for more accurate polymicrobial identification: [Sylph v0.8.0](https://github.com/bluenote-1577/sylph) using the bacteria dbv1 GTDB r220 (113,104 genomes 2024-04-24) database and the fungal RefSeq v0.3 -c200 2024-07-25 (595 genomes) database
+<!---    - [Metabuli v1.0.8](https://github.com/steineggerlab/Metabuli) using a custom database with all RefSeq complete & chromosome fungi & bacteria plus human genome GRCh38.p14 (49684 bacteria and 130 fungi, built 2024-10-29) --->
+- Antimicrobial resistance gene detection was performed using the following tools and required a minimum > 90% identity to the reference gene:
+  - [StarAMR v0.11.0](https://github.com/phac-nml/staramr) using the following databases: ResFinder Tue, 24 May 2022 06:51 (db commit fa32d9a3cf0c12ec70ca4e90c45c0d590ee810bd), PlasmidFinder Wed, 18 Jan 2023 09:45 (c18e08c17a5988d4f075fc1171636e47546a323d), MLST v2.23.0
+  - [kmerResistance v2.2.0](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/) using the ResFinder v2.4.0 (2024-08-06) database and the KmerFinder bacteria 2024-01-30 database
+- *Staphylococcus aureus* isolates were screened for the following toxin genes: *eta*, *etb*, *tsst-1*, *sea*, *seb*, *sec*, *sed*, *see*, *seh*, *selk*, *sell*, *selq*, *lukK* and *lukS* using the following tool with a minimum > 80% identity to the reference gene:
+  - [VFDB via ABRicate v1.0.1](https://github.com/tseemann/abricate) using database 2024-10-29 (4370 sequences)
+- *Streptococcus pyogenes* isolates were screened for the M protein gene (*emm*) using the following tool with a minimum > 95% identity to the reference U.S. Centers for Disease Control and Prevention [trimmed *emm* subtype database](https://www.cdc.gov/streplab/groupa-strep/emm-background.html#:~:text=emm%20typing%20is%20based%20on,sequence%2C%20allowing%20for%20direct%20sequencing.).
+  - [emmtyper v0.2.0](https://github.com/MDU-PHL/emmtyper) using database 2024-10-29 (2570 sequences)
+- HTML results report generated with [R v4.4.3](https://www.R-project.org/)
+
+&nbsp;
+
+# DISCLAIMER {-}
+
+- Testing was performed, in whole or in part using a research-based test
+- Whole genome sequencing is not an ISO accredited test and results are validated and measured for quality based on in-house workflows
+- Interpretation of the results are based on in-house workflows
+- Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database does not represent all resistant determinants or point mutations.
+    - These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial.
+- Predicted phenotypes in the Summary Table \@ref(tab:summary) only show those antimicrobials included in the Clinical and Laboratory Standards Institute document [Performance Standards for Antimicrobial Susceptibility Testing: Informational Supplement M100 ED35:2025](https://clsi.org/standards/products/microbiology/documents/m100/) Table 1 (Tier 1 and Tier 2).
+    - Please see Table \@ref(tab:clsitable) for the full list of reportable antimicrobials in Tier 1 and Tier 2 for each organism
+    - Note that this workflow cannot confirm the following Tier 1 and Tier 2 antimicrobials:
+        - *Enterobacterales*: Ampicillin+Sulbactam
+        - *Enterobacterales*, *Salmonella*, *Shigella*, *Pseudomonas aeruginosa*, *Stenotrophomonas*, *Burkholderia*, non-*Enterobacterales* Gram negatives, and *Streptococcus pneumoniae*: Levofloxacin
+        - *Staphylococcus* species and *Enterococcus* species: Daptomycin
+        - *Streptococcus pneumoniae*: Moxifloxacin
+        - *Neisseria meningitidis*: Cefotaxime, Ceftriaxone, Penicillin
+
+
+```{r clsitable, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE}
+
+clsi <- list()
+clsi_files <- strsplit(params$clsi, "\\s+")[[1]]
+
+for (i in 1:length(clsi_files)) {
+    temp <- read_tsv(here(clsi_files[i]), col_types = "c____", col_names = c("antibiotics")) %>% 
+      mutate(antibiotics = str_replace(antibiotics, "-", "+")) %>% 
+      mutate(antibiotics = str_to_title(antibiotics)) %>% 
+      mutate(table = str_remove_all(clsi_files[i], "_.*|resources/")) %>% 
+      # mutate(table = str_to_title(table)) %>% 
+      mutate(organism = str_remove_all(clsi_files[i], "resources/Table1[^_]*_|.tsv")) %>% 
+      mutate(organism = str_to_title(organism))  %>% 
+      mutate(organism = str_replace(organism, "_", " ")) %>% 
+      mutate(organism = str_replace(organism, " shigella", ", Shigella")) %>% 
+      mutate(organism = str_replace(organism, " gas_gbs", " (Group A and B)")) 
+    clsi[[i]] <- temp
+}
+tab <- bind_rows(clsi) %>% 
+  group_by(table, organism) %>% 
+  summarise(antibiotics=paste(antibiotics, collapse=", ")) %>% 
+  select(`CLSI Table` = table, `Organism` = organism, `Antibiotics` = antibiotics)
+
+# list all antibiotics as one string
+tab$Antibiotics <- sapply(strsplit(tab$Antibiotics, ", ", fixed = TRUE), function(x) paste(unique(sort(x)), collapse = ", "))  
+
+# capitalize table1 letters
+tab$`CLSI Table` <- gsub("(1.*)", "\\U\\1", tab$`CLSI Table`,perl=TRUE)
+
+kable(tab, caption="Tier 1 and Tier 2 reportable antibiotics from CLSI Performance Standard M100 ED34:2024 Table 1", digits = 2, align = "l", "html", escape = "F") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+  column_spec(2, italic = TRUE) %>% 
+  scroll_box(height = "500px")
+
+```
+
+&nbsp;
+
+# DATA DICTIONARY {-}
+
+- **ONT**: Oxford Nanopore Technologies
+- **Q-score**: a quality score indicating the probability of correct identification of the nucleotides generated by DNA sequencing. A Q-score of 20 (Q20) represents an error rate of 1 in 100 (meaning every 100 bp sequencing read may contain an error).
+- **QC**: quality control measure. Samples are assigned pass/fail in the QC columns of the Summary table if total bases sequenced divided by genome size (average depth of coverage) is greater than 10-fold. 
+- **CLSI**: Clinical and Laboratory Standards Institute
+- **AMR**: antimicrobial resistance
+
+&nbsp;
+
+<!-- remove whitespace at end of report --->
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>

@@ -1,0 +1,14 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+
+description: an entry in the sample sheet
+properties:
+  sample:
+    type: string
+    description: sample name/identifier
+  reads:
+    type: string
+    description: path to input ONT reads
+
+required:
+  - sample
+  - reads

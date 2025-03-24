@@ -1,0 +1,276 @@
+---
+title: |
+  |
+  | GENOME SEQUENCING REPORT 
+  |
+subtitle: "Output by the **venae** pipeline"
+date: "`r Sys.Date()`"
+pagetitle: "`r paste(params$runname, params$hour)`"
+output:
+  bookdown::html_document2:
+    keep_md: no
+    code_folding: hide
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    self_contained: true
+    
+params:
+  reads: "x"
+  readsfilt: "x"
+  spp: "x"
+  sylph: "x"
+  vfdb: "x"
+  failed: "x"
+  emm: "x"
+---
+
+```{r sppsetup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(kableExtra)
+library(patchwork)
+library(plotly)
+
+```
+
+&nbsp;
+
+## ORGANISM IDENTIFICATION {-}
+
+The following species were identified for each sample in Figure \@ref(fig:sppbarchart). 
+
+```{r sppbarchart, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, fig.cap='Species ID and read count for each sample. These results are from Level 2 species identification which cannot identify species with low read counts (flagged with asterisks). Level 1 species identification for low read count samples can be found in Table 1. For more information of Level 1 and Level 2 species identification, please see Methods.'}
+
+# import species data and assign "other" to sequence abundance < sppproportion
+sylph <- import_sylph_tax(here(params$sylph)) %>%
+  mutate(species = ifelse(sequence_abundance < as.integer(params$sppproportion), "other", species))
+
+# import read twokb file to plot number of reads used for species ID
+read <- read_tsv(here(params$readsfilt), col_types = "cci") %>%
+  filter(filtering == "2k") %>%
+  mutate(sample = str_remove(sample, "results/")) %>%
+  select(sample, `Total bases` = bases, `Number of reads` = reads)
+
+samples_for_sppID <- read %>%
+  select(sample) %>%
+  distinct() 
+
+# import read clean file to get list of all sample names
+samples_all <- import_sample_names(here(params$samplenames))
+
+# combine sample list with sylph data
+spp_combined <- left_join(samples_for_sppID, sylph, by = "sample") %>%
+  mutate(sequence_abundance = round(sequence_abundance, digits = 2)) %>%
+  select(sample, species, sequence_abundance) 
+
+# get proportion of sequences unclassified by subtraction from totals
+unclassified <- spp_combined %>% 
+  group_by(sample) %>% 
+  summarize(sum = sum(sequence_abundance)) %>% 
+  mutate(species = ifelse(sum < 100 | is.na(sum), "unclassified", "none")) %>% 
+  filter(species == "unclassified") %>% 
+  mutate(sequence_abundance = ifelse(!is.na(sum), round(100 - sum, digits = 2), 100)) %>%
+  left_join(read, by = "sample") %>%
+  mutate(sequence_abundance = ifelse(`Number of reads` == 0, 0, sequence_abundance)) %>%
+  select(sample,species, sequence_abundance)
+
+spp_incl_unclassified <- rbind(spp_combined, unclassified) %>%
+  filter(!is.na(species)) %>%
+  arrange(sample) 
+
+# include samples that did not have any 2kb reads for classification and flag samples with low/no reads
+spp_incl_omitted <- samples_all %>%
+  left_join(spp_incl_unclassified, by = "sample") %>%
+  mutate(sequence_abundance = ifelse(is.na(sequence_abundance), 0, sequence_abundance)) %>%
+  mutate(sample = ifelse(sequence_abundance == 0, paste0(sample, "*"), sample)) %>%
+  mutate(sample = ifelse(species == "unclassified" & sequence_abundance == 100, paste0(sample, "*"), sample))
+
+# get color palette for spp plot, including grey for unclassified and specifying one color for a single spp
+if (nrow(unclassified) > 0) {
+  if (length(unique((spp_incl_unclassified$species))) == 2){
+    palette = c("#3B99B1", "#4d4c4c")
+  } else {
+    palette = c(hcl.colors(length(unique((spp_incl_unclassified$species)))-1, palette = "Zissou 1"), "#4d4c4c")
+  }
+} else {
+  if (length(unique((spp_incl_unclassified$species))) == 1){
+    palette = c("#3B99B1")
+  } else {
+    palette = c(hcl.colors(length(unique((spp_incl_unclassified$species))), palette = "Zissou 1"))
+  }
+}
+
+# plot first panel with species proportions
+a<-spp_incl_omitted %>% 
+  ggplot(aes(x = sequence_abundance, y = sample, fill = species)) +
+  geom_bar(stat = "identity", position = "stack") +
+  theme_bw() +
+  theme(axis.title.y = element_blank()) + #axis.ticks.y = element_blank(), axis.title.y = element_blank()) +
+  labs(x = "Sequence abundance\n(percent)", fill = "Species") +
+  scale_y_discrete(limits=rev) +
+  expand_limits(x = c(0, 100)) +
+  scale_fill_manual(values = palette)
+
+# get read counts and include samples that did not have any 2kb reads
+read_counts <- samples_all %>%
+  left_join(read, by = "sample") %>%
+  select(sample, Count = `Number of reads`) %>%
+  mutate(Count = ifelse(is.na(Count), 0, Count))
+
+# plot second panel with read counts
+b <- read_counts %>%
+  ggplot(aes(x = Count, y = sample)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  labs(x = "Number of reads\nfor species ID") +
+  theme(axis.text.y = element_blank()) +
+  scale_y_discrete(limits=rev) +
+  expand_limits(x = c(0, max(read_counts$Count +1))) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n=3)) 
+  
+
+plot1 <- ggplotly(a, tooltip = c("species", "sequence_abundance"))
+plot2 <- ggplotly(b, tooltip = c("Count"))
+
+subplot(plot1,
+        plot2,
+        widths = c(0.75, 0.25), titleX = TRUE, titleY = TRUE, shareY = TRUE)
+
+```
+
+### *STAPHYLOCOCCUS AUREUS* TOXINS {-}
+
+```{r staphtoxins, message=FALSE, echo=FALSE, warning=FALSE, results='asis'}
+
+staph <- sylph %>% 
+  select(sample, species) %>% 
+  filter(species == "Staphylococcus aureus") %>% 
+  select(Isolate = sample) 
+
+# If no Staph aureus detected in any isolates
+if (dim(staph)[1] == 0){
+  cat(paste("No *Staphylococcus aureus* isolates detected."))
+  
+} else {
+  
+ # If Staph aureus in failed assemblies (not enough read coverage)
+  if(file.size(here(params$failed)) != 0){ 
+      
+    # import failed samples    
+    failed <- read_tsv(here(params$failed), col_names = "sample", col_types = "c")
+    failed_samples <- failed %>% pull(sample)
+   
+      if (dim(subset(staph, Isolate %in% failed_samples))[1] != 0){
+          cat(paste("Not enough read coverage to detect toxin genes in the following *Staphylococcus aureus* isolate(s): ", paste(unlist(subset(staph, Isolate %in% failed_samples) %>% pull(Isolate)), collapse = ", "), "\n", sep = "\n\n"))
+      } 
+  
+    # remove failed samples from Staph aureus list  
+    samples <- staph %>% 
+      filter(!(Isolate %in% failed_samples)) %>% 
+      select(Isolate)
+    
+    } else {
+    
+    # if no failed staph samples, all staph samples are valid 
+    samples <- staph %>% 
+      select(Isolate)
+    
+    }
+  
+  # If no target toxin genes are detected in any sample
+  if (file.size(here(params$vfdb)) == 0){   
+    
+      # if there are only valid samples, print list with no toxin genes
+      if(dim(samples)[1] != 0){
+        
+        cat(paste("No toxin genes were detected in the following *Staphylococcus aureus* isolate(s): ", paste(unlist(samples), collapse = ", "), sep = "\n\n"))
+      }
+    
+    } else {
+  
+    # import toxin results 
+    df <- read_tsv(here(params$vfdb), col_types = "c____c___dd_____", col_names = c("Isolate", "Gene", "Percent identity (%)", "Percent coverage (%)")) %>%
+    select(Isolate, Gene, `Percent identity (%)`, `Percent coverage (%)`) %>%
+    mutate(Isolate = str_remove_all(Isolate, "_flye.fasta|.*/")) %>% 
+    filter(str_detect(Gene, "sea|seb|sec|sed|see|seh|selk|sell|selq|tsst|eta|etb|luk") | is.na(Gene)) 
+    
+    # join to non-failed sample list 
+    df1 <- left_join(samples, df, by = "Isolate") 
+    
+    # If one isolate has no toxin genes detected
+    none <- df1 %>% 
+      filter(is.na(Gene)) %>% 
+      pull(Isolate)
+    
+    if(length(none) != 0){
+      cat(paste("No toxin genes were detected in the following *Staphylococcus aureus* isolate(s): ", paste(unlist(none), collapse = ", "), "\n", sep = "\n\n"))
+    }
+    
+    # print table for isolates with toxin genes detected
+    df2 <- df1 %>% 
+      mutate(`Percent identity (%)` = color_code_gene_percentage(`Percent identity (%)`, 98)) %>%
+      mutate(`Percent coverage (%)` = color_code_gene_percentage(`Percent coverage (%)`, 90)) %>%
+      mutate(Gene = ifelse(is.na(Gene), "None", Gene)) %>%
+      arrange(Isolate) %>%
+      rename(Sample = Isolate)
+    
+    names(df2)[3] <- paste0(names(df2)[3], footnote_marker_symbol(1))
+    names(df2)[4] <- paste0(names(df2)[4], footnote_marker_symbol(1))
+      
+    df2 %>% kable("html", escape = "F", digits = 2, align = "l", caption = "Toxin genes predicted in <i>Staphylococcus aureus</i> isolates") %>% 
+    kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+    #scroll_box(height = "500px") %>% 
+    footnote(symbol = c("Percent identity and percent coverage are relative to the VFDB reference gene. Percent identity below 98 % and percent coverage below 90 % are flagged in red and should be interpreted with caution. NA indicates no toxin genes detected in this sample."))
+  }
+}
+```
+
+### *STREPTOCOCCUS PYOGENES* *emm*-TYPING {-}
+
+```{r strepemm, message=FALSE, echo=FALSE, warning=FALSE, results='asis'}
+
+failed <- read_tsv(here(params$failed), col_names = "sample", col_types = "c")
+failed_samples <- failed %>% pull(sample)
+
+top <- sylph %>% 
+  select(sample, species) %>% 
+  filter(species == "Streptococcus pyogenes") %>% 
+  select(Isolate = sample) 
+
+# If no Strep pyogenes detected in any isolates
+if (dim(top)[1] == 0){
+  cat(paste("No *Streptococcus pyogenes* isolates detected."))
+  
+} else {
+
+ # If Strep pyogenes in failed assemblies (not enough read coverage)
+  if (dim(subset(top, Isolate %in% failed_samples))[1] != 0){
+    cat(paste("Not enough read coverage to detect toxin genes in the following *Streptococcus pyogenes* isolate(s): ", paste(unlist(subset(top, Isolate %in% failed_samples) %>% pull()), collapse = ", "), "\n", sep = "\n\n"))
+  }
+  
+  # If some Strep pyogenes don't have failed assemblies
+  if (dim(subset(top, !(Isolate %in% failed_samples)))[1] != 0){
+
+    df <- read_tsv(here(params$emm), col_types = "c__c___c", col_names = c("Isolate", "type", "cluster")) %>% 
+    mutate(Isolate = str_remove_all(Isolate, "_flye.tmp")) %>%
+    arrange(Isolate) %>% 
+    mutate(type = ifelse(type == "-", NA, type)) %>% 
+    mutate(cluster = ifelse(cluster == "-", NA, cluster)) %>% 
+    rename("Predicted <i>emm</i> type*" = type, "<i>emm</i> cluster*" = cluster, Sample = Isolate) 
+
+    df %>% kable("html", escape = "F", digits = 2, align = "l", caption = "<i>emm</i> types predicted in <i>Streptococcus pyogenes</i> isolates") %>% 
+      kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+      footnote(symbol = c("<i>emm</i> types and clusters generated via the emmtyper tool which uses the U.S. Centers for Disease Control and Prevention trimmed emm subtype database. NA indicates no <i>emm</i> type was detected, possibly due to an incomplete assembly."), escape = FALSE)
+  }
+  
+}
+
+```

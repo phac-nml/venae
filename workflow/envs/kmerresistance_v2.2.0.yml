@@ -1,0 +1,15 @@
+name: kmerresistance_v2.2.0
+channels:
+  - fmaguire
+  - conda-forge
+  - bioconda
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - kma=1.4.15=he4a0461_0
+  - kmerresistance=2.2.0=h14c3975_0
+  - libgcc=14.2.0=h77fa898_1
+  - libgcc-ng=14.2.0=h69a702a_1
+  - libgomp=14.2.0=h77fa898_1
+  - libzlib=1.2.13=h4ab18f5_6
+  - zlib=1.2.13=h4ab18f5_6

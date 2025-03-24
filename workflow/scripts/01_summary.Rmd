@@ -1,0 +1,288 @@
+---
+title: |
+  |
+  | GENOME SEQUENCING REPORT 
+  |
+subtitle: "Output by the **venae** pipeline"
+date: "`r Sys.Date()`"
+pagetitle: "`r paste(params$runname, params$hour)`"
+
+output:
+  bookdown::html_document2:
+    keep_md: no
+    code_folding: hide
+    theme: flatly
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    self_contained: true
+    
+params:
+  reads: "x"
+  hour: "x"
+  sppproportion: "x"
+  minreadnumqc: "x"
+  minreadqscore: "x"
+  minreadlength: "x"
+  name: "x"
+  spp: "x"
+  sylph: "x"
+  genomesize: "x"
+  clsikey: "x"
+  clsi: "x"
+  staramr: "x"
+---
+
+```{r summarysetup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(here)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(formattable)
+library(kableExtra)
+library(tibble)
+
+```
+
+# SUMMARY RESULTS {-}
+
+**Run name:** `r params$name`  
+
+**Time point:** `r params$hour`  
+
+```{r summary, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE}
+
+# import read file to get list of all sample names, even if they don't show up in sylph due to not enough coverage
+samples <- import_sample_names(here(params$samplenames))
+
+# import sylph data and filter for order, genus, and spp
+sylph <- import_sylph_tax(here(params$sylph)) %>%
+  filter(sequence_abundance > as.integer(params$sppproportion))
+
+# import link between clades and CLSI tables
+clsikey <- read_tsv(here(params$clsikey), col_types = "cccc")
+
+# import ncbi genome size list
+ncbi <- read_tsv(here(params$genomesize)) %>%
+  select(!num_genomes)
+
+# if samples are missing from sylph due to low number of reads, add in kraken2 data
+missing <- get_missing_samples(samples, sylph)  # these samples selected for kraken2
+
+# if samples are missing ID in sylph, replace with kraken2 data
+if(length(missing) > 0){
+
+  # import kraken2 data
+  spp_list <- list()
+  spp_files <- strsplit(params$spp, "\\s+")[[1]]
+
+  for (i in 1:length(spp_files)) {
+      if(file.size(here(spp_files[i])) == 0){
+        next
+      
+        } else {
+          spp_list[[i]] <- import_kraken2_tax(here(spp_files[i]))
+        }
+  }
+
+  # create an empty file if no samples have any organism assigned
+  if(nrow(bind_rows(spp_list)) == 0){
+    tab <- samples %>% 
+    add_column(organism = NA, 
+            poly = NA, 
+            clsi = NA, 
+            genome_size = NA) %>%
+    mutate(organism = ifelse(sample %in% missing, paste0(organism, "*"), organism)) # to flag samples ID'd with kraken2
+
+  } else {
+    # combine into one file and filter for those that are missing
+    spp <- bind_rows(spp_list) %>% 
+      filter(sample %in% missing) %>%
+      select(sample, level, org, proportion, count) %>%
+      mutate(level = as.character(ifelse(level == "O", "order", ifelse(level == "S", "species", ifelse(level == "G", "genus", "unclassified"))))) %>%
+      filter(proportion > as.integer(params$sppproportion) & count > as.integer(params$minreadnumqc)) 
+
+    # combine kraken2 with sylph  
+    spp_combined <- samples %>% 
+      left_join(sylph, by = "sample") %>% 
+      pivot_longer(!c("sample", "sequence_abundance"), names_to = "level", values_to = "organism") %>%
+      left_join(spp, by = c("sample", "level")) %>%
+      mutate(organism = ifelse(is.na(organism), org, organism))
+    
+    # get clsi table for each sample
+    spp_clsi <- spp_combined %>%
+      left_join(clsikey, by = c("level", "organism" = "clade_name")) %>%
+      group_by(sample, sequence_abundance) %>% 
+      fill(clsi_group, .direction="down") %>%
+      ungroup(sequence_abundance) %>%
+      filter(level == "species") %>%
+      summarise(clsi = toString(clsi_group))     
+
+    # add in NCBI genome size to sample list and CLSI tables
+    tab <- spp_combined %>%
+      filter(level == "species") %>% 
+      mutate(genus = str_remove(organism, " .*")) %>% 
+      select(sample, genus, species = organism) %>%
+      left_join(ncbi, by = "genus") %>%
+      group_by(sample) %>% 
+      summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+      ungroup() %>%
+      mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no"))) %>% 
+      left_join(spp_clsi, by = "sample") %>% 
+      select(sample, organism, poly, clsi, genome_size) %>%
+      mutate(organism = ifelse(sample %in% missing, paste0(organism, "*"), organism)) # to flag samples ID'd with kraken2
+  }
+
+} else {
+  
+  sylph_clsi <- sylph %>%
+    pivot_longer(!c("sample", "sequence_abundance"), names_to = "level", values_to = "organism") %>%
+    left_join(clsikey, by = c("level", "organism" = "clade_name")) %>%
+    group_by(sample, sequence_abundance) %>% 
+    fill(clsi_group, .direction="down") %>%
+    ungroup(sequence_abundance) %>%
+    filter(level == "species") %>%
+    summarise(clsi = toString(clsi_group))     
+
+  # join genome size to sylph
+  tab <- samples %>%
+    left_join(sylph, by = "sample") %>%
+    left_join(ncbi, by = "genus") %>%
+    group_by(sample) %>% 
+    summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+    ungroup() %>% 
+    mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no"))) %>% 
+    left_join(sylph_clsi, by = "sample") %>% 
+    select(sample, organism, poly, clsi, genome_size) 
+}
+
+# Import CLSI files as a list of files, list elements labeled with table name
+clsi <- list()
+clsi_files <- strsplit(params$clsi, "\\s+")[[1]]
+for (i in 1:length(clsi_files)) {
+    clsi[[i]] <- read_tsv(here(clsi_files[i]), col_types = "c____", col_names = c("antibiotics")) %>% 
+      mutate(antibiotics = str_replace(antibiotics, "-", "+")) 
+    names(clsi)[i] <- str_remove_all(clsi_files[i], ".*resources/Table1[^_]*_|.tsv")
+}
+
+
+# Import StarAMR data
+if(file.size(here(params$staramr)) == 0){
+
+  df2 <- tibble(sample = character(), data = character(), cge_phenotype = character(), perc_ident = double(), perc_coverage = double())
+
+} else {
+
+  df <- import_staramr(here(params$staramr)) %>% 
+    mutate(cge_phenotype = case_when(
+              str_detect(data, "blaACC.*") ~ paste(cge_phenotype, ", Cefotetan", sep = ""),
+              data == "mph(C)" ~ paste(cge_phenotype, ", Clarithromycin", sep = ""),
+              data == "erm(C)" ~ paste(cge_phenotype, ", Clarithromycin", sep = ""),
+              data == "mecA" ~ paste(cge_phenotype, ", Oxacillin", sep = ""),
+              TRUE ~ cge_phenotype
+    )) %>% 
+    mutate(cge_phenotype = str_replace(cge_phenotype, "Clavulanic acid", "Clavulanate"))
+
+  df2 <- df %>% 
+    group_by(sample) %>% 
+    summarise(cge_phenotype=paste(cge_phenotype, collapse=",")) %>% 
+    mutate(cge_phenotype = str_remove_all(cge_phenotype, " ")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "_", " ")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "Clavulanicacid", "Clavulanic acid")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "ciprofloxacinI/R", "ciprofloxacin I/R")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "CetylpyridiniumChloride", "Cetylpyridinium Chloride")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "Nalidixicacid", "Nalidixic acid")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "decreasedsusceptibilitytomeropenem,", "decreased susceptibility to meropenem,")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "BenzylkoniumChloride", "Benzylkonium Chloride")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "EthidiumBromide", "Ethidium Bromide")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "VirginiamycinS", "Virginiamycin S")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "UnknownAminoglycoside", "Unknown Aminoglycoside")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "UnknownBeta-lactam", "Unknown Beta-lactam")) %>% 
+    mutate(cge_phenotype = str_replace_all(cge_phenotype, "PristinamycinIA", "Pristinamycin IA")) 
+
+  df2$cge_phenotype <- sapply(strsplit(df2$cge_phenotype, ",", fixed = TRUE), function(x) paste(unique(sort(x)), collapse = ", "))  
+} 
+
+# Join starAMR data to sample info
+all <- left_join(tab, df2, by = "sample")
+
+# filter phenotypes by CLSI tables
+for (i in 1:nrow(all)){
+  table <- all$clsi[i]
+  
+  # if no CLSI table exists, change phenotype to NA (for fungi and rando gram positives)
+  if (table == "NA" | is.na(table)){
+    
+    all$cge_phenotype[i] <- NA   
+    
+  } else if (str_detect(table, ",")){
+      table <- all$clsi[i]
+      test <- str_split(all$cge_phenotype[i], ", ")[[1]]
+      
+      # if multiple CLSI tables match for one isolate, get combined list of ref reportable genes
+      all_table <- str_split(table, ", ")[[1]]
+      vec = list()
+        for (j in 1:length(all_table)){
+          
+          if(!str_detect(all_table[j], "NA")){
+            
+            vec[[j]] <- str_to_title(pull(clsi[[all_table[j]]]))
+          }
+        }
+      ref <- unique(Reduce(c, vec))
+      
+      # filter the staramr phenotype against CLSI and replace in table
+      all$cge_phenotype[i] <- paste(unique(sort(Filter(function(x) any(x %in% test), ref))), collapse = ", ")
+      
+      # if no drugs are returned but table exists, change phenotype to "none"
+      if (all$cge_phenotype[i] == ""){
+        all$cge_phenotype[i] <- "None detected"
+      }
+      
+    } else {
+    # pull the correct CLSI table, the staramr phenotypes, and the CLSI drugs
+    table <- all$clsi[i]
+    test <- str_split(all$cge_phenotype[i], ", ")[[1]]
+    ref <- str_to_title(pull(clsi[[table]]))
+
+    # filter the staramr phenotype against CLSI and replace in table
+    all$cge_phenotype[i] <- paste(unique(sort(Filter(function(x) any(x %in% test), ref))), collapse = ", ")
+    
+    # if no drugs are returned but table exists, change phenotype to "none"
+    if (all$cge_phenotype[i] == ""){
+      all$cge_phenotype[i] <- "None detected"
+    }
+  }
+}
+
+# import read metrics 
+read <- import_read_metrics(here(params$reads))   
+
+# assign qc pass/fail based on species ID, median read length, median read quality
+all_qc <- left_join(all, read, by = "sample") %>% 
+  mutate(qc = ifelse((!is.na(organism) & organism != "NA" & !str_detect(organism, "\\*")) & `Median read length` > as.integer(params$minreadlength) &  `Median read quality` > as.integer(params$minreadqscore) & `Number of reads` > as.integer(params$minreadnumqc), "pass", "fail"))  %>%
+  select(Sample = sample, Organism = organism, `Polymicrobial` = poly, `QC` = qc, `Predicted resistance phenotype` = cge_phenotype) %>% 
+  mutate(`QC` = ifelse(`QC` == "fail", cell_spec(`QC`, "html", color = "#F8766D", bold = TRUE), cell_spec(`QC`, "html", color = "#00BFC4", bold = TRUE))) %>% 
+  mutate(`Predicted resistance phenotype` = ifelse(`Predicted resistance phenotype` == "NA" | is.na(`Predicted resistance phenotype`), "Could not predict", `Predicted resistance phenotype`)) 
+  
+# add footnotes
+names(all_qc)[2] <- paste0(names(all_qc)[2], footnote_marker_symbol(1))
+names(all_qc)[4] <- paste0(names(all_qc)[4], footnote_marker_symbol(2))
+names(all_qc)[5] <- paste0(names(all_qc)[5], footnote_marker_symbol(3))
+
+# output final table
+kable(all_qc, caption="Summary results", digits = 2, align = "l", "html", escape = "F") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+  column_spec(2, italic = TRUE) %>% 
+  scroll_box(height = "500px") %>% 
+  footnote(symbol = c(
+    "Organisms flagged with asterisks (\\*) indicate samples with Level 1 species identification due to a low number of reads.\n",
+    paste("Samples failed QC if fewer than ", as.integer(params$sppproportion), " % of reads and fewer than ", as.integer(params$minreadnumqc), " reads total mapped to one species or if the median read length was < ", as.integer(params$minreadlength), "bases or if the median read quality Q-score was < ", as.integer(params$minreadqscore), ".\n"), 
+    "Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database does not represent all resistant determinants or point mutations. These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial. Predicted phenotypes only show those antimicrobials included in the Clinical and Laboratory Standards Institute document Performance Standards for Antimicrobial Susceptibility Testing: Informational Supplement M100 ED35:2025 Table 1 (Tier 1 and Tier 2). Please see Table 5 for the full list of reportable antimicrobials in Tier 1 and Tier 2 for each organism. \"Could not predict\" indicates AMR prediction is not supported for this organism or that there was not enough sequencing data to generate an assembly.\n"))
+
+```
+
