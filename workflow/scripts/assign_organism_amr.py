@@ -50,8 +50,6 @@ if not data:
         pass
     with open(os.path.join(output_folder, "spp_fungi_samples.tsv"), mode='w') as empty:
         pass
-    with open(os.path.join(output_folder, "spp_staph_samples.tsv"), mode='w') as empty:
-        pass
     sys.exit(0)
 
 # concat all sample_spp.tsv   
