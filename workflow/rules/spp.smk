@@ -19,8 +19,8 @@ checkpoint spp_assign_organism_amr:
     threads: 1
     params:
         threshold=config["REPORT"]["SPP_DETECTION_PERCENT_THRESHOLD"],
-        folder=config['OUTPUT_FOLDER_NAME'],
-        samplelist=config['SAMPLES']
+        folder=config["OUTPUT_FOLDER_NAME"],
+        samplelist=config["SAMPLES"],
     log:
         os.path.join(output_dir_logs, "spp_assign_organism_amr", "assign_organism.out"),
     benchmark:
@@ -96,7 +96,7 @@ rule spp_sylph_sketch:
         sketch=config["PARAMS"]["SYLPH_SKETCH"],
         profile=config["PARAMS"]["SYLPH_PROFILE"],
         tax=config["PARAMS"]["SYLPH_TAX"],
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     threads: 8
     resources:
         mem_mb=14000,

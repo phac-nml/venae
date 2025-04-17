@@ -78,7 +78,7 @@ rule qc_remove_host_stats:
     output:
         os.path.join(output_dir, "qc_host_removed.tsv"),
     params:
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "qc_remove_host_stats", "remove_host_stats.out"),
     shell:
@@ -174,7 +174,7 @@ rule qc_failed_assemblies:
         os.path.join(output_dir, "qc_failed_assemblies.txt"),
     threads: 1
     params:
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "assembly_failed", "failed_assembly.out"),
     shell:
@@ -204,7 +204,7 @@ rule qc_checkm2:
         gather_files=lambda wildcards, input: input.gather_files,
         db=config["DATABASES"]["CHECKM2_DB"],
         extra=config["PARAMS"]["CHECKM2"],
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     resources:
         mem_mb=10000,
     log:

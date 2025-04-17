@@ -14,7 +14,7 @@ checkpoint assembly_flye:
         assembly=os.path.join(output_dir, "assembly_flye", "{sample}_flye.fasta"),
     params:
         extra=config["PARAMS"]["FLYE"],
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     threads: 8
     resources:
         mem_mb=2000,

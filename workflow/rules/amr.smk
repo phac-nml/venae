@@ -22,7 +22,7 @@ rule amr_kmerresistance:
         arg_db=config["DATABASES"]["KMERRESISTANCE_DB_ARG"],
         spp_db=config["DATABASES"]["KMERRESISTANCE_DB_SPP"],
         extra=config["PARAMS"]["KMERRESISTANCE"],
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     threads: 1
     log:
         os.path.join(
@@ -51,7 +51,7 @@ rule amr_kmerresistance_concatenate:
         os.path.join(output_dir, "amr_kmerresistance_summary.tsv"),
     threads: 1
     params:
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "amr_kmerresistance", "concatenate.out"),
     shell:
@@ -76,7 +76,7 @@ rule amr_staramr:  # settings: 90% identity over 60% coverage
     params:
         extra=config["PARAMS"]["STARAMR"],
         organism=get_pointfinder_organism,
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "amr_staramr", "{sample}_staramr.out"),
     benchmark:
@@ -105,7 +105,7 @@ rule amr_staramr_concatenate:
     threads: 1
     params:
         gather_files=lambda wildcards, input: input.gather_files,
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "amr_staramr", "concatenate.out"),
     shell:
