@@ -46,7 +46,7 @@ rule spp_detection_kraken2:
         extra=config["PARAMS"]["KRAKEN2"],
     threads: 8
     resources:
-        mem_mb=16000,
+        mem_mb=10000,
     output:
         report=os.path.join(output_dir, "spp_kraken2", "{sample}_clean_std.kreport"),
         spp=os.path.join(output_dir, "{sample}_spp.tsv"),
