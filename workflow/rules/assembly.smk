@@ -14,6 +14,7 @@ checkpoint assembly_flye:
         assembly=os.path.join(output_dir, "assembly_flye", "{sample}_flye.fasta"),
     params:
         extra=config["PARAMS"]["FLYE"],
+        folder=config['OUTPUT_FOLDER_NAME']
     threads: 8
     resources:
         mem_mb=2000,
@@ -25,12 +26,12 @@ checkpoint assembly_flye:
         )
     shell:
         """
-        (flye {params.extra} {input.reads} --out-dir results/assembly_flye/{wildcards.sample} --threads {threads}) &> {log} || true
+        (flye {params.extra} {input.reads} --out-dir {params.folder}/assembly_flye/{wildcards.sample} --threads {threads}) &> {log} || true
 
         # copy assembly if it exists
-        if [ -f results/assembly_flye/{wildcards.sample}/assembly.fasta ]; then
-            cp results/assembly_flye/{wildcards.sample}/assembly.fasta results/assembly_flye/{wildcards.sample}/{wildcards.sample}_flye.fasta
-            cp results/assembly_flye/{wildcards.sample}/assembly.fasta {output.assembly}
+        if [ -f {params.folder}/assembly_flye/{wildcards.sample}/assembly.fasta ]; then
+            cp {params.folder}/assembly_flye/{wildcards.sample}/assembly.fasta {params.folder}/assembly_flye/{wildcards.sample}/{wildcards.sample}_flye.fasta
+            cp {params.folder}/assembly_flye/{wildcards.sample}/assembly.fasta {output.assembly}
         
         # if it doesn't exist, make a fake output assembly so this rule completes
         else

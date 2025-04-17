@@ -31,9 +31,10 @@ import getopt
 
 # Import sppproportion param, sequence abundances below this percent will be filtered out
 sppproportion = int(sys.argv[1])
+output_folder = str(sys.argv[2])
 
 # import sample_spp.tsv files and skip empty files
-files = glob.glob(os.path.join("results", "spp_sylph_profile.tsv"))
+files = glob.glob(os.path.join(output_folder, "spp_sylph_profile.tsv"))
 data = []
 
 for i in range(0,len(files)):
@@ -45,11 +46,11 @@ for i in range(0,len(files)):
 
 # if there is no data in any spp files, generate blank files and quit
 if not data:
-    with open(os.path.join("results", "spp_assigned.tsv"), mode='w') as empty:
+    with open(os.path.join(output_folder, "spp_assigned.tsv"), mode='w') as empty:
         pass
-    with open(os.path.join("results", "spp_fungi_samples.tsv"), mode='w') as empty:
+    with open(os.path.join(output_folder, "spp_fungi_samples.tsv"), mode='w') as empty:
         pass
-    with open(os.path.join("results", "spp_staph_samples.tsv"), mode='w') as empty:
+    with open(os.path.join(output_folder, "spp_staph_samples.tsv"), mode='w') as empty:
         pass
     sys.exit(0)
 
@@ -63,7 +64,7 @@ q = subset_filt[[0,14]]
 
 # trim strings in Sylph output to get only species name
 q.columns = ['sample','spp_ID']
-q.loc[:, ('sample')] = q['sample'].str.replace(r'results.qc_reads.', '', regex=True)
+q.loc[:, ('sample')] = q['sample'].str.replace(r'.*.qc_reads.', '', regex=True)
 q.loc[:, ('spp_ID')] = q['spp_ID'].str.replace(r'^\S+\.. | str.*$|_.$|MAG: |\[|\]|uncultured ', '', regex=True)
 q.loc[:, ('spp_ID')] = q['spp_ID'].str.replace(r'^(\S+\s\S+)\s.*', r'\1', regex=True)
 
@@ -81,9 +82,9 @@ q_nodup = qq.drop_duplicates()
 collapsed = q_nodup.groupby("sample").first().reset_index()
 
 # output assigned species
-collapsed.to_csv(os.path.join("results", "spp_assigned.tsv"), sep="\t", index=False)
+collapsed.to_csv(os.path.join(output_folder, "spp_assigned.tsv"), sep="\t", index=False)
 
 # print fungi samples to separate file
 fungi = ['Nakaseomyces glabratus', 'Candida albicans', 'Candida auris', 'Candida parapsilosis', 'Candida orthopsilosis']
 fungi_df = qq[qq['spp_ID'].isin(fungi)]
-fungi_df.to_csv(os.path.join("results", "spp_fungi_samples.tsv"), sep="\t", index=False)
+fungi_df.to_csv(os.path.join(output_folder, "spp_fungi_samples.tsv"), sep="\t", index=False)

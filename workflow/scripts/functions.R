@@ -46,7 +46,7 @@ import_sylph_tax <- function(x) {
   filter(!str_detect(clade_name, "t__")) %>% 
   separate_wider_delim(clade_name, delim = "|", names = c("domain", "phyla", "class", "order", "family", "genus", "species")) %>%
   select(sample, order, genus, species, sequence_abundance) %>%
-  mutate(sample = str_remove_all(sample, "results/spp_sylph/|_cleanfilt2k.fastq.gz.sylphmpa"),
+  mutate(sample = str_remove_all(sample, ".*/spp_sylph/|_cleanfilt2k.fastq.gz.sylphmpa"),
           species = str_remove(species, "s__"),
           order = str_remove(order, "o__"),
           genus = str_remove(genus, "g__"),
@@ -83,7 +83,7 @@ import_kraken2_tax <- function(x) {
 import_read_metrics <- function(x) {
   read_tsv(here(params$reads), col_types = "ccd", col_names = c("sample", "metric", "value")) %>% 
   select(sample, metric, value) %>% 
-  mutate(sample = str_remove(sample, "results/")) %>%
+  mutate(sample = str_remove(sample, ".*/")) %>%
   pivot_wider(id_cols = sample, names_from = metric, values_from = value) 
 }
 

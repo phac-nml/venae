@@ -19,6 +19,7 @@ checkpoint spp_assign_organism_amr:
     threads: 1
     params:
         threshold=config["REPORT"]["SPP_DETECTION_PERCENT_THRESHOLD"],
+        folder=config['OUTPUT_FOLDER_NAME']
     log:
         os.path.join(output_dir_logs, "spp_assign_organism_amr", "assign_organism.out"),
     benchmark:
@@ -29,7 +30,7 @@ checkpoint spp_assign_organism_amr:
         )
     shell:
         """
-        (python {input.script} {params.threshold}) &> {log}
+        (python {input.script} {params.threshold} {params.folder}) &> {log}
         """
 
 
@@ -94,30 +95,31 @@ rule spp_sylph_sketch:
         sketch=config["PARAMS"]["SYLPH_SKETCH"],
         profile=config["PARAMS"]["SYLPH_PROFILE"],
         tax=config["PARAMS"]["SYLPH_TAX"],
+        folder=config['OUTPUT_FOLDER_NAME']
     threads: 8
     resources:
         mem_mb=14000,
     shell:
         """
         # run sketch AND PROFILE
-        (sylph sketch -r {input.reads} -t {threads} {params.sketch} -d results/spp_sylph) &> {log.profile}
+        (sylph sketch -r {input.reads} -t {threads} {params.sketch} -d {params.folder}/spp_sylph) &> {log.profile}
 
         # check if *.sylsp files exist
-        count=$(find  results/spp_sylph/ -type f -name "*.sylsp" | wc -l)
+        count=$(find  {params.folder}/spp_sylph/ -type f -name "*.sylsp" | wc -l)
         if [[ ${{count}} -ne 0 ]]; then
 
-            (sylph profile results/spp_sylph/*.sylsp {params.db_bac} {params.db_fungi} -t {threads} {params.profile} -o results/spp_sylph/profile.tsv) &>> {log.profile}
-            cat results/spp_sylph/profile.tsv | sed 's#Sample_file.*##g;s#_cleanfilt2k.fastq.gz##g' | sort > {output.report}
+            (sylph profile {params.folder}/spp_sylph/*.sylsp {params.db_bac} {params.db_fungi} -t {threads} {params.profile} -o {params.folder}/spp_sylph/profile.tsv) &>> {log.profile}
+            cat {params.folder}/spp_sylph/profile.tsv | sed 's#Sample_file.*##g;s#_cleanfilt2k.fastq.gz##g' | sort > {output.report}
 
             # remove .sylphmpa files if they exist as cannot force overwrite
-            files=$(find  results/spp_sylph/ -type f -name "*.sylphmpa" | wc -l)
+            files=$(find  {params.folder}/spp_sylph/ -type f -name "*.sylphmpa" | wc -l)
             if [[ ${{files}} -ne 0 ]]; then
-                rm results/spp_sylph/*.sylphmpa
+                rm {params.folder}/spp_sylph/*.sylphmpa
             fi
 
             # run taxonomy 
-            (sylph-tax taxprof results/spp_sylph/profile.tsv -t {params.tax_bac} {params.tax_fungi} -o results/spp_sylph/ {params.tax}) &> {log.tax}
-            grep "" results/spp_sylph/*sylphmpa | sed 's#:#\t##g' | sed 's/.*#SampleID.*//g' | awk 'NF' > {output.tax}
+            (sylph-tax taxprof {params.folder}/spp_sylph/profile.tsv -t {params.tax_bac} {params.tax_fungi} -o {params.folder}/spp_sylph/ {params.tax}) &> {log.tax}
+            grep "" {params.folder}/spp_sylph/*sylphmpa | sed 's#:#\t##g' | sed 's/.*#SampleID.*//g' | awk 'NF' > {output.tax}
         
         else
             (echo ""

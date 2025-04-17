@@ -22,6 +22,7 @@ rule amr_kmerresistance:
         arg_db=config["DATABASES"]["KMERRESISTANCE_DB_ARG"],
         spp_db=config["DATABASES"]["KMERRESISTANCE_DB_SPP"],
         extra=config["PARAMS"]["KMERRESISTANCE"],
+        folder=config['OUTPUT_FOLDER_NAME']
     threads: 1
     log:
         os.path.join(
@@ -35,7 +36,7 @@ rule amr_kmerresistance:
         )
     shell:
         """
-        (kmerresistance -i {input.reads} -o results/amr_kmerresistance/{wildcards.sample} -t_db {params.arg_db} -s_db {params.spp_db} {params.extra}) &> {log}
+        (kmerresistance -i {input.reads} -o {params.folder}/amr_kmerresistance/{wildcards.sample} -t_db {params.arg_db} -s_db {params.spp_db} {params.extra}) &> {log}
         """
 
 
@@ -49,11 +50,13 @@ rule amr_kmerresistance_concatenate:
     output:
         os.path.join(output_dir, "amr_kmerresistance_summary.tsv"),
     threads: 1
+    params:
+        folder=config['OUTPUT_FOLDER_NAME']
     log:
         os.path.join(output_dir_logs, "amr_kmerresistance", "concatenate.out"),
     shell:
         """
-        grep -H "" {input} | sed 's#.*Score.*##g;s#.KmerRes:#\t#g;s#results/amr_kmerresistance/##g;s#*NC_007795*$##g' | awk 'NF' | sort > {output}
+        grep -H "" {input} | sed 's#.*Score.*##g;s#.KmerRes:#\t#g;s#{params.folder}/amr_kmerresistance/##g;s#*NC_007795*$##g' | awk 'NF' | sort > {output}
         """
 
 
@@ -73,6 +76,7 @@ rule amr_staramr:  # settings: 90% identity over 60% coverage
     params:
         extra=config["PARAMS"]["STARAMR"],
         organism=get_pointfinder_organism,
+        folder=config['OUTPUT_FOLDER_NAME']
     log:
         os.path.join(output_dir_logs, "amr_staramr", "{sample}_staramr.out"),
     benchmark:
@@ -82,13 +86,13 @@ rule amr_staramr:  # settings: 90% identity over 60% coverage
     shell:
         """
         # remove output folders if they exist, cannot force overwrite
-        if [ -d results/amr_staramr/{wildcards.sample}/ ]; then
-            rm -r results/amr_staramr/{wildcards.sample}/
+        if [ -d {params.folder}/amr_staramr/{wildcards.sample}/ ]; then
+            rm -r {params.folder}/amr_staramr/{wildcards.sample}/
         fi
         
-        (staramr search -o results/amr_staramr/{wildcards.sample}/ {params.organism} {params.extra} {input}) &> {log}
+        (staramr search -o {params.folder}/amr_staramr/{wildcards.sample}/ {params.organism} {params.extra} {input}) &> {log}
 
-        mv results/amr_staramr/{wildcards.sample}/detailed_summary.tsv {output.report}
+        mv {params.folder}/amr_staramr/{wildcards.sample}/detailed_summary.tsv {output.report}
         """
 
 
@@ -101,11 +105,12 @@ rule amr_staramr_concatenate:
     threads: 1
     params:
         gather_files=lambda wildcards, input: input.gather_files,
+        folder=config['OUTPUT_FOLDER_NAME']
     log:
         os.path.join(output_dir_logs, "amr_staramr", "concatenate.out"),
     shell:
         """
-        if [[ -d results/amr_staramr ]]; then
+        if [[ -d {params.folder}/amr_staramr ]]; then
             cat {params.gather_files} | sed 's#^Isolate.*##g' | awk 'NF' > {output}
         else 
             (echo ""

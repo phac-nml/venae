@@ -145,7 +145,7 @@ if(length(missing) > 0){
 # import read metrics 
 read <- read_tsv(here(params$readsfilt), col_types = "cciiiiiiidd") %>% 
   filter(filtering == "1k") %>%
-  mutate(sample = str_remove(sample, "results/")) %>%
+  mutate(sample = str_remove(sample, ".*/")) %>%
   select(sample, `Total bases` = bases, `Number of reads` = reads, `Mean read length` = mean_length, `Read length N50` = n50, `Mean read quality` = mean_quality, `Median read length` = median_length, `Median read quality` = median_quality) %>%
   arrange(sample) 
 
