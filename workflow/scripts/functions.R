@@ -81,7 +81,7 @@ import_kraken2_tax <- function(x) {
 #   Tibble with read quality data
 # = = = = = = = = = = = = = = = = =
 import_read_metrics <- function(x) {
-  read_tsv(here(params$reads), col_types = "ccd", col_names = c("sample", "metric", "value")) %>% 
+  read_tsv(here(x), col_types = "ccd", col_names = c("sample", "metric", "value")) %>% 
   select(sample, metric, value) %>% 
   mutate(sample = str_remove(sample, ".*/")) %>%
   pivot_wider(id_cols = sample, names_from = metric, values_from = value) 
