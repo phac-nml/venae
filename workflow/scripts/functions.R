@@ -15,6 +15,22 @@ import_sample_names <- function(x) {
 
 # = = = = = = = = = = = = = = = = =
 # PURPOSE: 
+#   Import list of fungi sample names 
+#
+# INPUT: 
+#   Path to spp_fungi_samples.tsv
+#
+# RETURN: 
+#   Vector of sample names
+# = = = = = = = = = = = = = = = = =
+
+import_fungi_list <- function(x) {
+  read_tsv(here(x)) %>%
+  pull(sample)
+}
+
+# = = = = = = = = = = = = = = = = =
+# PURPOSE: 
 #   Get list of missing/failed samples with no species ID
 #
 # INPUT: 

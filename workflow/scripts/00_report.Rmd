@@ -40,6 +40,7 @@ params:
   checkm: "x"
   vfdb: "x"
   emm: "x"
+  fungi: "x"
   cgekey: "x"
 ---
 
