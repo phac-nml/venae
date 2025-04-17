@@ -139,6 +139,7 @@ rule generate_report:
         cgekey=os.path.join("resources", "cge_key_20240612_phenotypes.txt"),
         vfdb=os.path.join(output_dir, "typing_staph_aureus_toxins.tsv"),
         emm=os.path.join(output_dir, "typing_strep_pyo_emm.tsv"),
+        fungi=os.path.join(output_dir, "spp_fungi_samples.tsv"),
         checkm=os.path.join(output_dir, "qc_assembly_checkm2.tsv"),
     output:
         output_report,
@@ -181,6 +182,7 @@ rule generate_report:
                 checkm="{input.checkm}", \
                 vfdb="{input.vfdb}", \
                 emm="{input.emm}", \
+                fungi="{input.fungi}", \
                 clsi="{input.clsi}"),
             output_file = "{output}")' ) &> {log}
         mv workflow/scripts/{output} {output}

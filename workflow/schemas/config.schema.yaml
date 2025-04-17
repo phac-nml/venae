@@ -43,8 +43,6 @@ properties:
         type: string
       KMERRESISTANCE: 
         type: string
-      QUAST: 
-        type: string
       STAPH_AUREUS_TYPING:
         type: string
       STREP_PYOGENES_TYPING:
@@ -64,7 +62,6 @@ properties:
       - COVERM
       - STARAMR
       - KMERRESISTANCE
-      - QUAST
       - STAPH_AUREUS_TYPING
       - STREP_PYOGENES_TYPING
 

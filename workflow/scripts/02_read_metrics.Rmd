@@ -97,35 +97,28 @@ if(length(missing) > 0){
     spp <- bind_rows(spp_list) %>% 
       filter(sample %in% missing) %>%
       select(sample, level, org, proportion, count) %>%
-      filter(level == "S") %>%
-      mutate(level = ifelse(level == "S", "species", "unclassified")) %>%
-      filter((proportion > as.integer(params$sppproportion)) & (count > as.integer(params$minreadnumqc))) %>%
-      mutate(genus = gsub(" .*$", "", org)) %>% 
-      select(sample, species = org, genus) 
+      mutate(level = as.character(ifelse(level == "O", "order", ifelse(level == "S", "species", ifelse(level == "G", "genus", "unclassified"))))) %>%
+      filter(proportion > as.integer(params$sppproportion) & count > as.integer(params$minreadnumqc)) 
 
-    # combine kraken2 with sylph and assign genome size
-    if (nrow(spp) == 0){
-      tab <- samples %>% 
-        left_join(sylph, by = "sample") %>% 
-        left_join(ncbi, by = "genus") %>%
-        group_by(sample) %>% 
-        summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
-        ungroup() %>%
-        mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no")))     
-    } else {
+    # combine kraken2 with sylph  
+    spp_combined <- samples %>% 
+      left_join(sylph, by = "sample") %>% 
+      pivot_longer(!c("sample", "sequence_abundance"), names_to = "level", values_to = "organism") %>%
+      left_join(spp, by = c("sample", "level")) %>%
+      mutate(organism = ifelse(is.na(organism), org, organism))
+    
+    # add in NCBI genome size to sample list
+    tab <- spp_combined %>%
+    filter(level != "order") %>%
+    pivot_wider(id_cols = c(sample), names_from = "level", values_from = "organism") %>%
+    left_join(ncbi, by = "genus") %>%
+    group_by(sample) %>% 
+    summarise(organism = ifelse(is.na(species), toString(genus), toString(species)), 
+              genome_size = round(sum(mean_size_bp/1000000), 
+              digits = 1)) %>% 
+    ungroup() %>%
+    mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no")))
 
-      tab <- samples %>% 
-        left_join(sylph, by = "sample") %>% 
-        left_join(spp, by = c("sample")) %>%
-        mutate(genus = ifelse(is.na(genus.x), genus.y, genus.x)) %>%
-        mutate(species = ifelse(is.na(species.x), species.y, species.x)) %>%
-        select(sample, genus, species) %>%
-        left_join(ncbi, by = "genus") %>%
-        group_by(sample) %>% 
-        summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
-        ungroup() %>%
-        mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no")))     
-    }  
   }
 
 } else {
@@ -145,7 +138,7 @@ if(length(missing) > 0){
 # import read metrics 
 read <- read_tsv(here(params$readsfilt), col_types = "cciiiiiiidd") %>% 
   filter(filtering == "1k") %>%
-  mutate(sample = str_remove(sample, "results/")) %>%
+  mutate(sample = str_remove(sample, ".*/")) %>%
   select(sample, `Total bases` = bases, `Number of reads` = reads, `Mean read length` = mean_length, `Read length N50` = n50, `Mean read quality` = mean_quality, `Median read length` = median_length, `Median read quality` = median_quality) %>%
   arrange(sample) 
 

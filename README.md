@@ -42,7 +42,7 @@ By default, several resource-intensive steps have a minimum resource usage alloc
 | Tool | CPUs | Memory |
 | :--- | :--- | :--- |
 | `sylph` | 8 | 14 Gb |
-| `kraken2` | 8 | 8 Gb |
+| `kraken2` | 8 | 10 Gb |
 | `CheckM2` | 8 | 12 Gb |
 | `Flye` | 8 | 2 Gb |
  

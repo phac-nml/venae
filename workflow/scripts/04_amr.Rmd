@@ -24,6 +24,7 @@ params:
   amrfinder: "x"
   kmer: "x"
   cgekey: "x"
+  fungi: "x"
 ---
 
 ```{r setup_amr, include=FALSE}
@@ -41,6 +42,8 @@ library(tibble)
 
 failed <- read_tsv(here(params$fail), col_names = "sample", col_types = "c")
 failed_samples <- failed %>% pull(sample)
+
+fungi <- import_fungi_list(params$fungi)
 
 ```
 
@@ -79,7 +82,8 @@ if(file.size(here(params$staramr)) == 0){
     mutate(`Percent identity (%)` = color_code_gene_percentage(`Percent identity (%)`, 98)) %>%
     mutate(`Percent coverage (%)` = color_code_gene_percentage(`Percent coverage (%)`, 90)) %>%
     mutate(Gene = ifelse(is.na(Gene), "None", Gene)) %>% 
-    mutate(Gene = ifelse(Gene != "None" & !is.na(Gene), cell_spec(Gene, "html", bold = TRUE), cell_spec(Gene, "html"))) 
+    mutate(Gene = ifelse(Gene != "None" & !is.na(Gene), cell_spec(Gene, "html", bold = TRUE), cell_spec(Gene, "html"))) %>%
+    filter(!((Sample %in% fungi) & Gene == "None"))
     
   # add footnotes
   names(df3)[4] <- paste0(names(df3)[4], footnote_marker_symbol(1))

@@ -50,7 +50,7 @@ library(tibble)
 
 # SUMMARY RESULTS {-}
 
-**Run name:** `r params$name`  
+**Run name:** `r params$runname`  
 
 **Time point:** `r params$hour`  
 
@@ -124,12 +124,13 @@ if(length(missing) > 0){
 
     # add in NCBI genome size to sample list and CLSI tables
     tab <- spp_combined %>%
-      filter(level == "species") %>% 
-      mutate(genus = str_remove(organism, " .*")) %>% 
-      select(sample, genus, species = organism) %>%
+      filter(level != "order") %>%
+      pivot_wider(id_cols = c(sample), names_from = "level", values_from = "organism") %>%
       left_join(ncbi, by = "genus") %>%
       group_by(sample) %>% 
-      summarise(organism = toString(species), genome_size = round(sum(mean_size_bp/1000000), digits = 1)) %>% 
+      summarise(organism = ifelse(is.na(species), toString(genus), toString(species)), 
+                genome_size = round(sum(mean_size_bp/1000000), 
+                digits = 1)) %>% 
       ungroup() %>%
       mutate(poly = ifelse(str_detect(organism, ","), "yes", ifelse(organism == "NA", NA, "no"))) %>% 
       left_join(spp_clsi, by = "sample") %>% 

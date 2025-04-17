@@ -77,11 +77,13 @@ rule qc_remove_host_stats:
         ),
     output:
         os.path.join(output_dir, "qc_host_removed.tsv"),
+    params:
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "qc_remove_host_stats", "remove_host_stats.out"),
     shell:
         """
-        (grep -H "sequences classified (" {input.logs} | tr -s '[:blank:]' | sed "s#results/logs/qc_nohuman/##g;s#_nohuman\\.out##g;s#: .*(#\t#g;s#%)##g" | sort | sed '1i sample\treads_removed_percent' > {output}) &> {log}
+        (grep -H "sequences classified (" {input.logs} | tr -s '[:blank:]' | sed "s#{params.folder}/logs/qc_nohuman/##g;s#_nohuman\\.out##g;s#: .*(#\t#g;s#%)##g" | sort | sed '1i sample\treads_removed_percent' > {output}) &> {log}
         """
 
 
@@ -171,13 +173,15 @@ rule qc_failed_assemblies:
     output:
         os.path.join(output_dir, "qc_failed_assemblies.txt"),
     threads: 1
+    params:
+        folder=config["OUTPUT_FOLDER_NAME"],
     log:
         os.path.join(output_dir_logs, "assembly_failed", "failed_assembly.out"),
     shell:
         """
-        for GENOME in results/assembly_flye/*.fasta
+        for GENOME in {params.folder}/assembly_flye/*.fasta
         do
-            HEADER=$(echo $GENOME | sed 's#_flye.fasta##g;s#results/assembly_flye/##g') 
+            HEADER=$(echo $GENOME | sed 's#_flye.fasta##g;s#{params.folder}/assembly_flye/##g') 
             if [[ -s $GENOME ]]; then
                 touch {output}
             else
@@ -200,6 +204,7 @@ rule qc_checkm2:
         gather_files=lambda wildcards, input: input.gather_files,
         db=config["DATABASES"]["CHECKM2_DB"],
         extra=config["PARAMS"]["CHECKM2"],
+        folder=config["OUTPUT_FOLDER_NAME"],
     resources:
         mem_mb=10000,
     log:
@@ -212,8 +217,8 @@ rule qc_checkm2:
         
         # if all assemblies are empty/failed:
         if [[ -s checkm2_temp.fasta ]]; then
-                (checkm2 predict -t {threads} {params.extra} -i results/assembly_flye --database_path {params.db} -o results/qc_checkm2) &> {log}
-                cp results/qc_checkm2/quality_report.tsv {output.report}
+                (checkm2 predict -t {threads} {params.extra} -i {params.folder}/assembly_flye --database_path {params.db} -o {params.folder}/qc_checkm2) &> {log}
+                cp {params.folder}/qc_checkm2/quality_report.tsv {output.report}
             else
                 touch {output.report}
         fi

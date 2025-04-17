@@ -19,7 +19,6 @@ PARAMS:
     COVERM: "mean length --min-covered-fraction 0"
     STARAMR: "--pid-threshold 90"
     KMERRESISTANCE: "-ont"
-    QUAST: "--min-contig 0"
     STAPH_AUREUS_TYPING: ""
     STREP_PYOGENES_TYPING: "--output-format verbose"
 

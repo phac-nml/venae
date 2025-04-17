@@ -56,7 +56,7 @@ sylph <- import_sylph_tax(here(params$sylph)) %>%
 # import read twokb file to plot number of reads used for species ID
 read <- read_tsv(here(params$readsfilt), col_types = "cci") %>%
   filter(filtering == "2k") %>%
-  mutate(sample = str_remove(sample, "results/")) %>%
+  mutate(sample = str_remove(sample, ".*/")) %>%
   select(sample, `Total bases` = bases, `Number of reads` = reads)
 
 samples_for_sppID <- read %>%

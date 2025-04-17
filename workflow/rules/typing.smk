@@ -52,7 +52,7 @@ rule typing_concatenate_abricate_staph_toxins:
         os.path.join(output_dir_logs, "typing_staph_aureus", "abricate_vfdb.out"),
     shell:
         """
-        if [ ! -z {params.gather_files} ]; then
+        if [ ! -z "{params.gather_files}" ]; then
             (cat {params.gather_files} | sed 's/#FILE.*//g' | awk 'NF' > {output}) &> {log}
         else
             touch {output}
@@ -97,7 +97,7 @@ rule typing_concatenate_emmtyper_strep_pyo:
         os.path.join(output_dir_logs, "typing_strep_pyo", "emmtyper.out"),
     shell:
         """
-        if [ ! -z {params.gather_files} ]; then
+        if [ ! -z "{params.gather_files}" ]; then
             (cat {params.gather_files} > {output}) &> {log}
         else
             touch {output}
