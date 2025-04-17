@@ -59,8 +59,6 @@ To adjust specific parameters used by tools in the workflow, edit the fields in 
     - percent identity ` --pid-threshold 90`
 - KMERRESISTANCE
     - ONT long-read preset for KMA `-ont`
-- QUAST (QUAST assembly quality metrics):
-    - minimum size of contig considered ` --min-contig 0`
 - STAPH_AUREUS_TYPING (*Staphylococcus aureus* toxin typing via VFDB and ABRicate)
 - STREP_PYOGENES_TYPING (*Streptococcus pyogenes* *emm* typing via emmtyper)
     - verbose `--output format verbose`
