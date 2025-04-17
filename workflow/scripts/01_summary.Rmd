@@ -50,7 +50,7 @@ library(tibble)
 
 # SUMMARY RESULTS {-}
 
-**Run name:** `r params$name`  
+**Run name:** `r params$runname`  
 
 **Time point:** `r params$hour`  
 
