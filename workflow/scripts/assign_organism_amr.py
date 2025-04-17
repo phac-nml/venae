@@ -10,11 +10,11 @@
 #
 # COMMAND LINE USAGE:
 #
-# assign_organism_amr.py [species detection threshold integer]
+# assign_organism_amr.py [species detection threshold integer] [output folder name] [path to sample list]
 #
 # EXAMPLE:
 #
-# assign_organism_amr.py 2
+# assign_organism_amr.py 2 results/ config/samples.tsv
 #
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -32,6 +32,7 @@ import getopt
 # Import sppproportion param, sequence abundances below this percent will be filtered out
 sppproportion = int(sys.argv[1])
 output_folder = str(sys.argv[2])
+sample_list = str(sys.argv[3])
 
 # import sample_spp.tsv files and skip empty files
 files = glob.glob(os.path.join(output_folder, "spp_sylph_profile.tsv"))
@@ -54,6 +55,10 @@ if not data:
 
 # concat all sample_spp.tsv   
 combined_file = pd.concat(data)
+
+# get list of all samples 
+sample_list = pd.read_csv(sample_list, sep="\t", header=0)
+samples = sample_list.loc[:,('sample')]
 
 # select columns and filter for spp proportion 
 subset = combined_file[[0,3,14]]
@@ -79,8 +84,11 @@ qq["pointfinder_organism"]=q["spp_ID"].apply(lambda x: stardict.get(x))
 q_nodup = qq.drop_duplicates()
 collapsed = q_nodup.groupby("sample").first().reset_index()
 
+# join to sample list 
+all_samples_collapsed = pd.merge(samples, collapsed, on="sample", how = "left")
+
 # output assigned species
-collapsed.to_csv(os.path.join(output_folder, "spp_assigned.tsv"), sep="\t", index=False)
+all_samples_collapsed.to_csv(os.path.join(output_folder, "spp_assigned.tsv"), sep="\t", index=False)
 
 # print fungi samples to separate file
 fungi = ['Nakaseomyces glabratus', 'Candida albicans', 'Candida auris', 'Candida parapsilosis', 'Candida orthopsilosis']

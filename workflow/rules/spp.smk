@@ -19,7 +19,8 @@ checkpoint spp_assign_organism_amr:
     threads: 1
     params:
         threshold=config["REPORT"]["SPP_DETECTION_PERCENT_THRESHOLD"],
-        folder=config['OUTPUT_FOLDER_NAME']
+        folder=config['OUTPUT_FOLDER_NAME'],
+        samplelist=config['SAMPLES']
     log:
         os.path.join(output_dir_logs, "spp_assign_organism_amr", "assign_organism.out"),
     benchmark:
@@ -30,7 +31,7 @@ checkpoint spp_assign_organism_amr:
         )
     shell:
         """
-        (python {input.script} {params.threshold} {params.folder}) &> {log}
+        (python {input.script} {params.threshold} {params.folder} {params.samplelist}) &> {log}
         """
 
 
