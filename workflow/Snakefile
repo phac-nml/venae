@@ -123,9 +123,7 @@ rule generate_report:
         "envs/r_env_report.yml"
     input:
         rmd=os.path.join("workflow", "scripts", "00_report.Rmd"),
-        spp=expand(
-            os.path.join(output_dir, "{sample}_spp.tsv"), sample=samples["sample"]
-        ),
+        spp=os.path.join(output_dir, "spp_kraken2_classification.tsv"),
         sylph=os.path.join(output_dir, "spp_sylph_taxonomy.tsv"),
         reads=os.path.join(output_dir, "qc_read_metrics_clean.tsv"),
         readsfilt=os.path.join(output_dir, "qc_read_metrics_cleanfilt.tsv"),

@@ -70,20 +70,10 @@ missing <- get_missing_samples(samples, sylph) # these samples selected for krak
 if(length(missing) > 0){
 
   # import kraken2 data
-  spp_list <- list()
-  spp_files <- strsplit(params$spp, "\\s+")[[1]]
-
-  for (i in 1:length(spp_files)) {
-      if(file.size(here(spp_files[i])) == 0){
-        next
-      
-        } else {
-          spp_list[[i]] <- import_kraken2_tax(here(spp_files[i]))
-        }
-  }
+  spp_list <- import_kraken2_tax(here(params$spp))
 
   # create an empty file if no samples have any organism assigned
-  if(nrow(bind_rows(spp_list)) == 0){
+  if(nrow(spp_list) == 0){
     tab <- samples %>% 
     add_column(organism = NA, 
             poly = NA, 
@@ -94,7 +84,7 @@ if(length(missing) > 0){
   } else {
     
     # combine into one file and filter for those that are missing
-    spp <- bind_rows(spp_list) %>% 
+    spp <- spp_list %>% 
       filter(sample %in% missing) %>%
       select(sample, level, org, proportion, count) %>%
       mutate(level = as.character(ifelse(level == "O", "order", ifelse(level == "S", "species", ifelse(level == "G", "genus", "unclassified"))))) %>%
