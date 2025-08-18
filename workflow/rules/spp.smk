@@ -4,7 +4,10 @@
 #
 ####################################
 
-localrules: spp_kraken2_concatenate
+
+localrules:
+    spp_kraken2_concatenate,
+
 
 # based on output from Sylph, get list of species-specific database parameters for AMR detection
 checkpoint spp_assign_organism_amr:
@@ -71,19 +74,26 @@ rule spp_detection_kraken2:
             {output.report} | tr -s '[:blank:]' | sed 's#_std.kreport:##g;s#\\t #\\t#g' > {output.spp}) &> {log}
         """
 
-# concatenate output of rule spp_detection_kraken2 for all samples 
+
+# concatenate output of rule spp_detection_kraken2 for all samples
 rule spp_kraken2_concatenate:
     input:
-        report=expand(os.path.join(output_dir, "spp_kraken2", "{sample}_spp.tsv"), sample = samples["sample"])
+        report=expand(
+            os.path.join(output_dir, "spp_kraken2", "{sample}_spp.tsv"),
+            sample=samples["sample"],
+        ),
     output:
-        os.path.join(output_dir, "spp_kraken2_classification.tsv")
+        os.path.join(output_dir, "spp_kraken2_classification.tsv"),
     threads: 1
     log:
-        os.path.join(output_dir_logs, "spp_kraken2_concatenate", "kraken2_concatenate.out")
+        os.path.join(
+            output_dir_logs, "spp_kraken2_concatenate", "kraken2_concatenate.out"
+        ),
     shell:
         """
         cat {input.report} > {output}
         """
+
 
 # detect species using Sylph
 rule spp_sylph_sketch:
