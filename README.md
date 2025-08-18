@@ -41,10 +41,10 @@ By default, several resource-intensive steps have a minimum resource usage alloc
 
 | Tool | CPUs | Memory |
 | :--- | :--- | :--- |
-| `sylph` | 8 | 14 Gb |
+| `sylph` | 8 | 16 Gb |
 | `kraken2` | 8 | 10 Gb |
-| `CheckM2` | 8 | 12 Gb |
-| `Flye` | 8 | 2 Gb |
+| `CheckM2` | 8 | 14 Gb |
+| `Flye` | 8 | 8 Gb |
  
 These can be overriden during the pipeline command following Snakemake usual syntax (`--set-resources`, `--set-threads`,`--set-default-resources`, etc.) or by [including a custom profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Note that `sylph` and `kraken2` load the entire database into memory (14 Gb and 8 Gb respectively), and run time will decrease the more cores are used if running multiple samples. 
 

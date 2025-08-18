@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v0.1.2 (August 2025)
+
+### Fixed:
+
+- Antibiotics in Table1H-2 *Streptococcus* VGS now correct based on CLSI ED35:2025
+- Remove individual drugs that were present in combos from CLSI Table1s
+- Include correct genome size in report when multiple spp are present and missing samples exist
+
+### Changed:
+
+- Update default resourves for Flye, Sylph, CheckM2
+- Kraken2 filtered reports now output into subfolder `spp_kraken2`
+- NanoPlot now outputs correctly-formatted TSV file
+
+### Added: 
+
+- Add *Streptococcus infantis* to CLSI key
+- Output concatenated Kraken2 file into output directory
+
 ## v0.1.1 (April 2025)
 
 ### Fixed:

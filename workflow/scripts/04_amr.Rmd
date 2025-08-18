@@ -18,7 +18,6 @@ output:
     self_contained: true
     
 params:
-  reads: "x"
   fail: "x"
   staramr: "x"
   amrfinder: "x"

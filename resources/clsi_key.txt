@@ -28,6 +28,7 @@ species	Streptococcus anginosus	streptococcus_VGS
 species	Streptococcus intermedius	streptococcus_VGS
 species	Streptococcus salivarius	streptococcus_VGS
 species	Streptococcus mitis	streptococcus_VGS
+species	Streptococcus infantis	streptococcus_VGS
 species	Streptococcus sanguinis	streptococcus_VGS
 species	Streptococcus bovis	streptococcus_VGS
 species	Streptococcus vestibularis	streptococcus_VGS
