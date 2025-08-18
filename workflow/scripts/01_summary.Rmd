@@ -256,7 +256,7 @@ read <- import_read_metrics(here(params$reads))
 
 # assign qc pass/fail based on species ID, median read length, median read quality
 all_qc <- left_join(all, read, by = "sample") %>% 
-  mutate(qc = ifelse((!is.na(organism) & organism != "NA" & !str_detect(organism, "\\*")) & `Median read length` > as.integer(params$minreadlength) &  `Median read quality` > as.integer(params$minreadqscore) & `Number of reads` > as.integer(params$minreadnumqc), "pass", "fail"))  %>%
+  mutate(qc = ifelse((!is.na(organism) & organism != "NA" & !str_detect(organism, "\\*")) & median_read_length > as.integer(params$minreadlength) &  median_qual > as.integer(params$minreadqscore) & number_of_reads > as.integer(params$minreadnumqc), "pass", "fail"))  %>%
   select(Sample = sample, Organism = organism, `Polymicrobial` = poly, `QC` = qc, `Predicted resistance phenotype` = cge_phenotype) %>% 
   mutate(`QC` = ifelse(`QC` == "fail", cell_spec(`QC`, "html", color = "#F8766D", bold = TRUE), cell_spec(`QC`, "html", color = "#00BFC4", bold = TRUE))) %>% 
   mutate(`Predicted resistance phenotype` = ifelse(`Predicted resistance phenotype` == "NA" | is.na(`Predicted resistance phenotype`), "Could not predict", `Predicted resistance phenotype`)) 

@@ -9,7 +9,7 @@ PARAMS:
     NANOQ_SPP: "-l 2000 -q 10"
     NANOQ_ASSEMBLY: "-l 1000 -q 10"
     NANOPLOTFORMAT: "--fastq"
-    NANOPLOT: "--loglength --no_static"
+    NANOPLOT: "--loglength --no_static --tsv_stats"
     KRAKEN2: "--use-names"
     SYLPH_SKETCH: "-c 200"
     SYLPH_PROFILE: "-u"

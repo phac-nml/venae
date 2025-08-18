@@ -17,7 +17,6 @@ output:
     self_contained: true
     
 params:
-  reads: "x"
   readsfilt: "x"
   spp: "x"
   sylph: "x"

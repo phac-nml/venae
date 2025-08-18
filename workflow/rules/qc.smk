@@ -150,8 +150,8 @@ rule qc_read_metrics:
     shell:
         """
         # for cleaned reads
-        (grep -H "Mean read\\|Median read\\|Number of reads\\|N50\\|Total bases" {input.cleanreports} | tr -s '[:blank:]' |  sed 's#:#\t#g;s#_clean/NanoStats.txt##g;s#qc_nanoplot/##g;s#,##g'  > {output.clean}) &> {log}
-
+        (grep -H "mean_\\|median_\\|number_of_reads\\|n50\\|number_of_bases" {input.cleanreports} | tr -s '[:blank:]' |  sed 's#:#\t#g;s#_clean/NanoStats.txt##g;s#qc_nanoplot/##g;s#,##g'  > {output.clean}) &> {log}
+        
         # for 1kb reads
         cat {input.onekbreports} {input.twokbreports}  > filt_temp.txt
         if [[ -s filt_temp.txt ]]; then

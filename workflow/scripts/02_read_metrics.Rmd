@@ -134,7 +134,7 @@ read <- read_tsv(here(params$readsfilt), col_types = "cciiiiiiidd") %>%
   arrange(sample) 
 
 read2 <- import_read_metrics(here(params$reads)) %>% 
-  select(sample, num_reads_pre_filter = `Number of reads`, total_bases_pre_filter = `Total bases`) 
+  select(sample, num_reads_pre_filter = number_of_reads, total_bases_pre_filter = number_of_bases) 
 
 all_reads <- left_join(read, read2, by = "sample")
 
