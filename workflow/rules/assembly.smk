@@ -17,7 +17,8 @@ checkpoint assembly_flye:
         folder=config["OUTPUT_FOLDER_NAME"],
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
+        runtime='180m',
     log:
         os.path.join(output_dir_logs, "assembly_flye", "{sample}_flye.out"),
     benchmark:

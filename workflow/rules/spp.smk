@@ -99,7 +99,7 @@ rule spp_sylph_sketch:
         folder=config["OUTPUT_FOLDER_NAME"],
     threads: 8
     resources:
-        mem_mb=14000,
+        mem_mb=16000,
     shell:
         """
         # run sketch AND PROFILE

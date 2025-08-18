@@ -206,7 +206,8 @@ rule qc_checkm2:
         extra=config["PARAMS"]["CHECKM2"],
         folder=config["OUTPUT_FOLDER_NAME"],
     resources:
-        mem_mb=10000,
+        mem_mb=14000,
+        runtime='180m',
     log:
         os.path.join(output_dir_logs, "qc_checkm2", "checkm2.out"),
     benchmark:
