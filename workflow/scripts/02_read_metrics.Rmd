@@ -110,10 +110,11 @@ if(length(missing) > 0){
     # add in NCBI genome size to sample list
     tab <- spp_combined %>%
     filter(level != "order") %>%
-    pivot_wider(id_cols = c(sample), names_from = "level", values_from = "organism") %>%
+    pivot_wider(id_cols = c(sample), names_from = "level", values_from = "organism", values_fn = function(x) toString(x)) %>%
+    separate_longer_delim(cols = c("genus", "species"), delim = ", ") %>%
     left_join(ncbi, by = "genus") %>%
     group_by(sample) %>% 
-    summarise(organism = ifelse(is.na(species), toString(genus), toString(species)), 
+    summarise(organism = ifelse(is.na(toString(species)), toString(genus), toString(species)), 
               genome_size = round(sum(mean_size_bp/1000000), 
               digits = 1)) %>% 
     ungroup() %>%
