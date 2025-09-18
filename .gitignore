@@ -1,7 +1,10 @@
-*.fastq
-*.fastq.gz
-*.tsv
-!pointfinder_organism.tsv
-!ncbi_genus_size.tsv
-!Table1*.tsv
-!Thumbs.db
+.nextflow*
+.nf-test*
+work/
+results/
+.DS_Store
+testing/
+testing*
+*.pyc
+null/
+docs/images/Thumbs.db

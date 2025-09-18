@@ -1,0 +1,125 @@
+nextflow_pipeline {
+
+    name "Full pipeline nf-tests for venae"
+    script "main.nf"
+    config "nextflow.config"
+
+    test("No input specified") {
+        tag "fail"
+
+        when {
+            params {
+                outdir      = "results"
+            }
+        }
+        then {
+            // Status
+            assert workflow.failed
+
+            // Message
+            assert workflow.stderr.contains("* Missing required parameter(s): input")
+        }
+    }
+
+    test("Missing samplesheet data") {
+        tag "fail"
+
+        when {
+            params {
+                input       = "${projectDir}/tests/test_data/samples_missing.tsv"
+                outdir      = "results"
+            }
+        }
+        then {
+            // Status
+            assert workflow.failed
+
+            // Message
+            assert workflow.stdout.contains("ERROR ~ Validation of pipeline parameters failed!")
+        }
+    }
+
+
+    test("Data run test") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/test_data/samples.tsv"
+                outdir = "results"
+            }
+        }
+
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // Channels and files exist
+            def lines = []
+            assert path("${launchDir}/results").exists()
+
+            // Final report file
+            assert path("${launchDir}/results/report.html").exists()
+
+            // Species files - Kraken2
+            assert path("${launchDir}/results/spp_kraken2_classification.tsv").exists()
+            lines = path("${launchDir}/results/spp_kraken2_classification.tsv").text
+            assert lines.contains("Escherichia coli")
+            assert lines.contains("Streptococcus pyogenes")
+
+            // Species files - sylph
+            assert path("${launchDir}/results/spp_sylph_profile.tsv").exists()
+            lines = path("${launchDir}/results/spp_sylph_profile.tsv").text
+            assert lines.contains("NZ_CP033092.2 Escherichia coli DSM 30083 = JCM 1649 = ATCC 11775")
+            assert lines.contains("NZ_LN831034.1 Streptococcus pyogenes strain NCTC8198")
+
+            // AMR files - assign spp for PointFinder
+            assert path("${launchDir}/results/spp_fungi_samples.tsv").exists()
+            assert path("${launchDir}/results/spp_assigned.tsv").exists()
+            lines = path("${launchDir}/results/spp_assigned.tsv").text
+            assert lines.contains("SRR22957083\tStreptococcus pyogenes\t")
+            assert lines.contains("SRR26162843\tEscherichia coli\tescherichia_coli")
+
+            // AMR files - KmerResistance
+            assert path("${launchDir}/results/amr_kmerresistance_summary.tsv").exists()
+            lines = path("${launchDir}/results/amr_kmerresistance_summary.tsv").text
+            assert lines.contains("blaCMY-42_1_HM146927")
+            assert !lines.contains("SRR22957083")
+
+            // AMR files - StarAMR
+            assert path("${launchDir}/results/amr_staramr_detailed_summary.tsv").exists()
+            lines = path("${launchDir}/results/amr_staramr_detailed_summary.tsv").text
+            assert lines.contains("SRR26162843_assembly\tblaCMY-42")
+            assert lines.contains("SRR22957083_assembly\tNone\tResistance")
+
+            // QC files - NanoPlot reads
+            assert path("${launchDir}/results/qc_read_metrics_clean.tsv").exists()
+            lines = path("${launchDir}/results/qc_read_metrics_clean.tsv").readLines()
+            assert lines.size() == 14
+
+            // QC files - Nanoq reads
+            assert path("${launchDir}/results/qc_read_metrics_cleanfilt.tsv").exists()
+            lines = path("${launchDir}/results/qc_read_metrics_cleanfilt.tsv").readLines()
+            assert lines.size() == 5
+
+            // QC files - CheckM2 assemblies
+            assert path("${launchDir}/results/qc_assembly_checkm2.tsv").exists()
+            lines = path("${launchDir}/results/qc_assembly_checkm2.tsv").text
+            assert lines.contains("SRR22957083_assembly\t87")
+            assert lines.contains("SRR26162843_assembly\t91")
+
+            // QC files - CoverM assemblies
+            assert path("${launchDir}/results/qc_assembly_coverage.tsv").exists()
+            lines = path("${launchDir}/results/qc_assembly_coverage.tsv").text
+            assert lines.contains("SRR22957083_assembly\t15")
+            assert lines.contains("SRR26162843_assembly\t3")
+
+            // Pipeline info and tracking
+            assert path("${launchDir}/results/pipeline_info").exists()
+            assert path("${launchDir}/results/pipeline_info/venae_software_versions.yml").exists()
+
+        }
+
+    }
+
+}

@@ -1,0 +1,55 @@
+nextflow_process {
+
+    name "Test Process CHECKM2_PREDICT"
+    tag "modules"
+    tag "checkm2"
+    tag "checkm2/predict"
+    script "modules/local/checkm2/predict/main.nf"
+    process "CHECKM2_PREDICT"
+
+    test("test_checkm2_predict") {
+        when {
+            params {
+
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/SRR26162843_assembly.fasta", checkIfExists: true)
+                input[1] = file(params.checkm2_db, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.checkm2_tsv, process.out.versions).match() },
+                { assert path(process.out.checkm2_tsv.get(0)).text.contains("SRR26162843_assembly\t91") },
+            )
+        }
+    }
+
+    test("test_checkm2_predict - stub") {
+
+        options '-stub'
+
+        when {
+            params {
+
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/SRR26162843_assembly.fasta", checkIfExists: true)
+                input[1] = file(params.checkm2_db, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.checkm2_tsv, process.out.versions).match() }
+            )
+        }
+    }
+}

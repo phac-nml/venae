@@ -1,0 +1,44 @@
+{
+    "sylph ont": {
+        "content": [
+            [
+                "versions.yml:md5,875f6d41b8b56815509e334041ceb65e"
+            ],
+            "Sample_file\tGenome_file\tTaxonomic_abundance\tSequence_abundance\tAdjusted_ANI\tTrue_cov\tANI_5-95_percentile\tEff_lambda\tLambda_5-95_percentile\tMedian_cov\tMean_cov_geq1\tContainment_ind\tNaive_ANI\tkmers_reassigned\tContig_name"
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2025-08-20T14:17:52.209620247"
+    },
+    "sylph ont - stub": {
+        "content": [
+            {
+                "0": [
+                    "profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "versions.yml:md5,875f6d41b8b56815509e334041ceb65e"
+                ],
+                "2": [
+                    ".command.log:md5,a079289dc28b2d9a9f4988ec6240c8f5"
+                ],
+                "log": [
+                    ".command.log:md5,a079289dc28b2d9a9f4988ec6240c8f5"
+                ],
+                "profile_out": [
+                    "profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions": [
+                    "versions.yml:md5,875f6d41b8b56815509e334041ceb65e"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2025-08-20T14:18:12.520558293"
+    }
+}

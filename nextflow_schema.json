@@ -1,0 +1,519 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/phac-nml/venae/master/nextflow_schema.json",
+    "title": "phac-nml/venae pipeline parameters",
+    "description": "A workflow to rapidly identify species and antimicrobial resistance genes in positive blood cultures sequenced using Oxford Nanopore Technologies (ONT)",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": ["input", "outdir"],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.(csv|tsv|txt)$",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to the output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                }
+            }
+        },
+        "databases_and_pre_computed_files": {
+            "title": "Databases and pre-computed files",
+            "type": "object",
+            "fa_icon": "fas fa-database",
+            "default": "",
+            "description": "The location of databases used by venae",
+            "required": [
+                "pointfinder_orgs",
+                "emmtyper_db",
+                "kmerresistance_db_arg",
+                "kmerresistance_db_spp",
+                "genomesize_key",
+                "cge_key",
+                "clsi_key",
+                "nohuman_db",
+                "checkm2_db",
+                "kraken2_db",
+                "sylph_db_bac",
+                "sylph_db_fungi",
+                "sylph_tax_bac",
+                "sylph_tax_fungi"
+            ],
+            "properties": {
+                "db_dir": {
+                    "type": "string",
+                    "description": "Path to directory containing downloaded databases",
+                    "default": "data",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "directory-path"
+                },
+                "pointfinder_orgs": {
+                    "type": "string",
+                    "description": "Path to StarAMR PointFinder database for antimicrobial resistance gene detection",
+                    "default": "data/pointfinder_organism.tsv",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "emmtyper_db": {
+                    "type": "string",
+                    "description": "Path to emmtyper database for emm typing in Streptococcus pyogenes",
+                    "default": "data/db_emmtyper/emm_types_20250131.fasta",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "kmerresistance_db_arg": {
+                    "type": "string",
+                    "description": "Path to KmerResistance ResFinder antimicrobial resistance database",
+                    "default": "data/db_kmerresistance/resfinder_v2.4.0",
+                    "pattern": "^\\S+$",
+                    "format": "file-path"
+                },
+                "kmerresistance_db_spp": {
+                    "type": "string",
+                    "description": "Path to KmerResistance KMA species placeholder database",
+                    "default": "data/db_kmerresistance/species_placeholder",
+                    "pattern": "^\\S+$",
+                    "format": "file-path"
+                },
+                "genomesize_key": {
+                    "type": "string",
+                    "description": "Path to key file with average genome size for each bacterial/fungal genus in NCBI",
+                    "default": "data/ncbi_genus_size.tsv",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "cge_key": {
+                    "type": "string",
+                    "description": "Path to CGE phenotype key file for KmerResistance antimicrobial resistance detection",
+                    "default": "data/cge_key_20240612_phenotypes.txt",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "clsi_key": {
+                    "type": "string",
+                    "description": "Path to CLSI organism key file for reportable antimicrobial phenotypes",
+                    "default": "data/clsi_key.txt",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "clsi_tables": {
+                    "type": "string",
+                    "description": "Path to CLSI Table references for reportable antimicrobial phenotypes",
+                    "default": "data/Table1*.tsv",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path-pattern"
+                },
+                "nohuman_db": {
+                    "type": "string",
+                    "description": "Path to NoHuman database for host read removal",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "directory-path"
+                },
+                "checkm2_db": {
+                    "type": "string",
+                    "description": "Path to CheckM2 database to assess assembly completeness",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "kraken2_db": {
+                    "type": "string",
+                    "description": "Path to Kraken2 database for species identification",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "directory-path"
+                },
+                "sylph_db_bac": {
+                    "type": "string",
+                    "description": "Path to sylph database for bacterial identification",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "sylph_db_fungi": {
+                    "type": "string",
+                    "description": "Path to sylph database for fungal identification",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "sylph_tax_bac": {
+                    "type": "string",
+                    "description": "Path to sylph-tax database to assign bacterial taxonomy",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "sylph_tax_fungi": {
+                    "type": "string",
+                    "description": "Path to sylph-tax database to assign fungal taxonomy",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                }
+            }
+        },
+        "data_processing_thresholds": {
+            "title": "Data processing thresholds",
+            "type": "object",
+            "fa_icon": "fas fa-file-signature",
+            "default": "",
+            "description": "Thresholds for filtering or QA/QC of data",
+            "required": [
+                "spp_detection_percent_threshold",
+                "spp_min_number_reads_threshold",
+                "min_read_qcore",
+                "min_median_read_length_bp"
+            ],
+            "properties": {
+                "spp_detection_percent_threshold": {
+                    "type": "number",
+                    "description": "Minimum percent sequence abundance for an organism to be reported in a sample",
+                    "default": 2,
+                    "minimum": 0,
+                    "maximum": 100,
+                    "fa_icon": "fas fa-filter"
+                },
+                "spp_min_number_reads_threshold": {
+                    "type": "integer",
+                    "description": "Minimum number of reads assigned to an organism for an organism to be reported in a sample",
+                    "default": 10,
+                    "minimum": 0,
+                    "fa_icon": "fas fa-filter"
+                },
+                "min_read_qcore": {
+                    "type": "number",
+                    "description": "Minimum mean read Q-score for a sample to pass quality control",
+                    "default": 10,
+                    "minimum": 0,
+                    "fa_icon": "fas fa-filter"
+                },
+                "min_median_read_length_bp": {
+                    "type": "integer",
+                    "description": "Minimum median read length for a sample to pass quality control",
+                    "default": 500,
+                    "minimum": 0,
+                    "fa_icon": "fas fa-filter"
+                }
+            }
+        },
+        "report_options": {
+            "title": "Report options",
+            "type": "object",
+            "fa_icon": "fas fa-file-signature",
+            "default": "",
+            "description": "The name and header information output in the report HTML file",
+            "required": ["report_name", "timepoint", "run_name"],
+            "properties": {
+                "report_name": {
+                    "type": "string",
+                    "description": "Name of output HTML report file",
+                    "default": "report",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "timepoint": {
+                    "type": "string",
+                    "description": "Timepoint to print in HTML report header",
+                    "default": "3h",
+                    "fa_icon": "fas fa-file-signature"
+                },
+                "run_name": {
+                    "type": "string",
+                    "description": "Run name to print in HTML report header",
+                    "default": "test",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "Git commit id for Institutional configs.",
+                    "default": "master",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_contact": {
+                    "type": "string",
+                    "description": "Institutional config contact information.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_url": {
+                    "type": "string",
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "placeholder_files": {
+            "title": "Empty placeholder files for input to the report if process does not run",
+            "type": "object",
+            "fa_icon": "fas fa-file-circle-xmark",
+            "default": "",
+            "description": "Empty placeholder files for input to the report if process does not run",
+            "properties": {
+                "no_failed": {
+                    "type": "string",
+                    "description": "Placeholder file for failed assemblies",
+                    "default": "qc_failed_assemblies.txt",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_sylph": {
+                    "type": "string",
+                    "description": "Placeholder file for sylph",
+                    "default": "spp_sylph_taxonomy.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_staph": {
+                    "type": "string",
+                    "description": "Placeholder file for Staphylococcus aureus toxin typing",
+                    "default": "typing_staph_aureus_toxins.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_strep": {
+                    "type": "string",
+                    "description": "Placeholder file for Streptococcus pyogenes emm typing",
+                    "default": "typing_strep_pyo_emm.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_checkm": {
+                    "type": "string",
+                    "description": "Placeholder file for CheckM2",
+                    "default": "qc_assembly_checkm2.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_coverage": {
+                    "type": "string",
+                    "description": "Placeholder file for CoverM",
+                    "default": "qc_assembly_coverage.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_staramr": {
+                    "type": "string",
+                    "description": "Placeholder file for StarAMR",
+                    "default": "amr_staramr_detailed_summary.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_kmerres": {
+                    "type": "string",
+                    "description": "Placeholder file for KmerResistance",
+                    "default": "amr_kmerresistance_summary.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_reads_filt": {
+                    "type": "string",
+                    "description": "Placeholder file when no reads pass filtering",
+                    "default": "qc_read_metrics_cleanfilt.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                }
+            }
+        },
+        "tool_parameters": {
+            "title": "Tool parameters",
+            "type": "object",
+            "fa_icon": "fas fa-screwdriver-wrench",
+            "default": "",
+            "description": "Parameters fed to commands for individual tools",
+            "required": ["flye_mode"],
+            "properties": {
+                "flye_mode": {
+                    "type": "string",
+                    "description": "Flye mode depending on the input data (source and error rate) (options: --nano-hq, --nano-raw, --nano-corr)",
+                    "default": "--nano-hq",
+                    "fa_icon": "fas fa-screwdriver-wrench"
+                },
+                "kraken2_save_output_fastqs": {
+                    "type": "boolean",
+                    "description": "Save classified and unclassified reads as fastq files from Kraken2",
+                    "default": false,
+                    "fa_icon": "fas fa-screwdriver-wrench"
+                },
+                "kraken2_save_reads_assignment": {
+                    "type": "boolean",
+                    "description": "Save a file reporting the taxonomic classification of each input read from Kraken2",
+                    "default": false,
+                    "fa_icon": "fas fa-screwdriver-wrench"
+                },
+                "abricate_databasedir": {
+                    "type": "object",
+                    "description": "Path to ABRicate database directory if different from default",
+                    "fa_icon": "fas fa-screwdriver-wrench"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
+                    "hidden": true
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "Email address for completion summary, only when pipeline fails.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully.",
+                    "hidden": true
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "Send plain-text email instead of HTML.",
+                    "fa_icon": "fas fa-remove-format",
+                    "hidden": true
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "pipelines_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/databases_and_pre_computed_files"
+        },
+        {
+            "$ref": "#/$defs/data_processing_thresholds"
+        },
+        {
+            "$ref": "#/$defs/report_options"
+        },
+        {
+            "$ref": "#/$defs/placeholder_files"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        },
+        {
+            "$ref": "#/$defs/tool_parameters"
+        }
+    ]
+}

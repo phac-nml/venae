@@ -1,0 +1,72 @@
+{
+    "Run assign_organism_amr": {
+        "content": [
+            {
+                "0": [
+                    "spp_assigned.tsv:md5,8d7ce7c938911fd2d4dee58794724f7f"
+                ],
+                "1": [
+                    "spp_fungi_samples.tsv:md5,48678834f07d88840733ff6b80ac3b8e"
+                ],
+                "2": [
+                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                ],
+                "fungi": [
+                    "spp_fungi_samples.tsv:md5,48678834f07d88840733ff6b80ac3b8e"
+                ],
+                "spp_assigned": [
+                    "spp_assigned.tsv:md5,8d7ce7c938911fd2d4dee58794724f7f"
+                ],
+                "versions": [
+                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2025-08-20T12:27:00.104609261"
+    },
+    "versions": {
+        "content": [
+            [
+                "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2025-08-20T12:27:00.199247804"
+    },
+    "Run assign_organism_amr - stub": {
+        "content": [
+            {
+                "0": [
+                    "spp_assigned.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "1": [
+                    "spp_fungi_samples.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "2": [
+                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                ],
+                "fungi": [
+                    "spp_fungi_samples.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "spp_assigned": [
+                    "spp_assigned.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "versions": [
+                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.04.4"
+        },
+        "timestamp": "2025-08-20T12:27:21.353417297"
+    }
+}

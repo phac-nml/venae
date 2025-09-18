@@ -1,0 +1,3 @@
+Sample_file	Genome_file	Taxonomic_abundance	Sequence_abundance	Adjusted_ANI	True_cov	ANI_5-95_percentile	Eff_lambda	Lambda_5-95_percentile	Median_cov	Mean_cov_geq1	Containment_ind	Naive_ANI	kmers_reassigned	Contig_name
+SRR26162843	gtdb_genomes_reps_r220/database/GCF/003/697/165/GCF_003697165.2_genomic.fna.gz	100.0000	100.0000	97.29	6.942	NA-NA	HIGH	NA-NA	5	5.048	9047/21223	97.29	0	NZ_CP033092.2 Escherichia coli DSM 30083 = JCM 1649 = ATCC 11775 chromosome, complete genome
+SRR22957083	gtdb_genomes_reps_r220/database/GCF/002/055/535/GCF_002055535.1_genomic.fna.gz	100.0000	100.0000	98.87	7.913	NA-NA	HIGH	NA-NA	4	4.242	5573/7935	98.87	0	NZ_LN831034.1 Streptococcus pyogenes strain NCTC8198 chromosome 1, complete sequence

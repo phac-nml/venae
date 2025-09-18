@@ -1,0 +1,60 @@
+nextflow_process {
+
+    name "Test Process SYLPHTAX_TAXPROF"
+    script "../main.nf"
+    process "SYLPHTAX_TAXPROF"
+
+    tag "modules"
+    tag "sylphtax"
+    tag "sylphtax_taxprof"
+
+
+    test("sylphtax on sylph profile") {
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[1] = file(params.sylph_tax_bac, checkIfExists: true)
+                input[2] = file(params.sylph_tax_fungi, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.versions,
+                    process.out.taxprof_output
+                ).match() }
+            )
+        }
+
+    }
+
+    test("sylphtax on sylph profile - stub") {
+
+        options '-stub'
+
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[1] = file(params.sylph_tax_bac, checkIfExists: true)
+                input[2] = file(params.sylph_tax_fungi, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.versions,
+                    process.out.taxprof_output
+                ).match() }
+            )
+        }
+    }
+
+}

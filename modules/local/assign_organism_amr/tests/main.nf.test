@@ -1,0 +1,62 @@
+nextflow_process {
+
+    name "Test Process ASSIGN_ORGANISM_AMR"
+    script "modules/local/assign_organism_amr/main.nf"
+    process "ASSIGN_ORGANISM_AMR"
+
+    tag "modules"
+    tag "assign_organism_amr"
+
+    test("Run assign_organism_amr") {
+
+        when {
+            params {
+                outdir = "tests/results"
+            }
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[1] = file(params.pointfinder_orgs, checkIfExists: true)
+                input[2] = 2
+                input[3] = file("${projectDir}/tests/test_data/samples.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() },
+                { assert snapshot(process.out.versions).match("versions") },
+                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR22957083\tStreptococcus pyogenes\t") },
+                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR26162843\tEscherichia coli\tescherichia_coli") },
+            )
+        }
+
+    }
+
+    test("Run assign_organism_amr - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[1] = file(params.pointfinder_orgs, checkIfExists: true)
+                input[2] = 2
+                input[3] = file("${projectDir}/tests/test_data/samples.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}
