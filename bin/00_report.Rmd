@@ -33,6 +33,7 @@ params:
   genomesize: "x"
   failed: "x"
   staramr: "x"
+  chroquetas: "x"
   amrfinder: "x"
   kmer: "x"
   clsi: "x"
@@ -84,13 +85,7 @@ source(("functions.R"))
 
 # METHODS {-}
 
-- Blood cultures flagged positive by the BACT/ALERT 3D automated microbial detection system (Biomerieux, Saint-Laurent, Canada) at HSC were aliquoted in vials sent to NML by courier
-- DNA was immediately extracted upon receipt using the [QIAamp BiOstic Bacteremia DNA Kit](https://www.qiagen.com/us/products/discovery-and-translational-research/dna-rna-purification/dna-purification/microbial-dna/qiaamp-biostic-bacteremia-dna-kit) (Qiagen) (approximate time: 2 h)
-- DNA was quantified on a Qubit using the Broad Range kit (approximate time: 15 mins)
-- The Rapid Barcoding Kit v14 (SQK-RBK114.24) was used for library preparation according to the manufacturer's instructions (approximate time: 2 h)
-- The final library was loaded onto a R10.4.1 flow cell (approximate time: 15 mins)
-- Data was basecalled using Dorado v0.9.0 and the SUP (super accurate model) basecalling model v5.0.0
-- The **venae** pipeline v0.1.0 managed by [Nextflow](https://www.nextflow.io/) was run to analyze the sequencing results and output this report
+- The [venae pipeline](https://github.com/phac-nml/venae) v0.2.1 managed by [Nextflow](https://www.nextflow.io/) was run to analyze the ONT sequencing reads and output this report
 - Human reads were removed and discarded with [NoHuman v0.3.0](https://github.com/mbhall88/nohuman) using the Kraken2 Human Pangenome Reference Consortium database: v1 (2023-09)
 - Samples passed quality control (QC) measures if all of the following criteria were met:
   - More than `r as.integer(params$sppproportion)` % of reads and more than `r as.integer(params$minreadnumqc)` reads total mapped to one species
@@ -104,6 +99,7 @@ source(("functions.R"))
 - Antimicrobial resistance gene detection was performed using the following tools and required a minimum > 90% identity to the reference gene:
   - [StarAMR v0.11.0](https://github.com/phac-nml/staramr) using the following databases: ResFinder Tue, 24 May 2022 06:51 (db commit fa32d9a3cf0c12ec70ca4e90c45c0d590ee810bd), PlasmidFinder Wed, 18 Jan 2023 09:45 (c18e08c17a5988d4f075fc1171636e47546a323d), MLST v2.23.0
   - [kmerResistance v2.2.0](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/) using the ResFinder v2.4.0 (2024-08-06) database and the KmerFinder bacteria 2024-01-30 database
+  - [ChroQueTas v1.0.0](https://github.com/nmquijada/ChroQueTas) using the FungAMR database v1.0.0 (June 2025)
 - *Staphylococcus aureus* isolates were screened for the following toxin genes: *eta*, *etb*, *tsst-1*, *sea*, *seb*, *sec*, *sed*, *see*, *seh*, *selk*, *sell*, *selq*, *lukK* and *lukS* using the following tool with a minimum > 80% identity to the reference gene:
   - [VFDB via ABRicate v1.0.1](https://github.com/tseemann/abricate) using database 2024-10-29 (4370 sequences)
 - *Streptococcus pyogenes* isolates were screened for the M protein gene (*emm*) using the following tool with a minimum > 95% identity to the reference U.S. Centers for Disease Control and Prevention [trimmed *emm* subtype database](https://www.cdc.gov/streplab/groupa-strep/emm-background.html#:~:text=emm%20typing%20is%20based%20on,sequence%2C%20allowing%20for%20direct%20sequencing.).
@@ -117,9 +113,14 @@ source(("functions.R"))
 - Testing was performed, in whole or in part using a research-based test
 - Whole genome sequencing is not an ISO accredited test and results are validated and measured for quality based on in-house workflows
 - Interpretation of the results are based on in-house workflows
-- Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database does not represent all resistant determinants or point mutations.
+- Predicted resistance phenotypes for fungi are derived from the FungAMR database and does not represent all resistant determinants or point mutations
+    - These phenotypes have not been validated and may not represent the true phenotype for each antimicrobial
+    - Predicted resistance should be confirmed by phenotypic susceptibility testing
+- Predicted resistance phenotypes for fungi in the Summary Table \@ref(tab:summary) only show those antimicrobials with resistance confidence scores between 1 and 4
+    - For more information on confidence scores, see [here](https://github.com/nmquijada/ChroQueTas/wiki/Confidence-score-for-antimicrobial-resistance)
+- Predicted resistance phenotypes for bacteria are derived from the Centre for Genomic Epidemiology ResFinder database does not represent all resistant determinants or point mutations
     - These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial.
-- Predicted phenotypes in the Summary Table \@ref(tab:summary) only show those antimicrobials included in the Clinical and Laboratory Standards Institute document [Performance Standards for Antimicrobial Susceptibility Testing: Informational Supplement M100 ED35:2025](https://clsi.org/standards/products/microbiology/documents/m100/) Table 1 (Tier 1 and Tier 2).
+- Predicted resistance phenotypes for bacteria in the Summary Table \@ref(tab:summary) only show those antimicrobials included in the Clinical and Laboratory Standards Institute document [Performance Standards for Antimicrobial Susceptibility Testing: Informational Supplement M100 ED35:2025](https://clsi.org/standards/products/microbiology/documents/m100/) Table 1 (Tier 1 and Tier 2)
     - Please see Table \@ref(tab:clsitable) for the full list of reportable antimicrobials in Tier 1 and Tier 2 for each organism
     - Note that this workflow cannot confirm the following Tier 1 and Tier 2 antimicrobials:
         - *Enterobacterales*: Ampicillin+Sulbactam

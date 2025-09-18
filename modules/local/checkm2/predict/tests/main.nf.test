@@ -14,7 +14,7 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/SRR26162843_assembly.fasta", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "SRR26162843_assembly.fasta", checkIfExists: true)
                 input[1] = file(params.checkm2_db, checkIfExists: true)
                 """
             }
@@ -39,7 +39,7 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/SRR26162843_assembly.fasta", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "SRR26162843_assembly.fasta", checkIfExists: true)
                 input[1] = file(params.checkm2_db, checkIfExists: true)
                 """
             }

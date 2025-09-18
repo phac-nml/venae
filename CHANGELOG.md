@@ -3,6 +3,34 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.2.1 (September 2025)
+
+This release added ChroQueTas (fungi AMR tool) to the workflow & report which will run if fungi organisms are detected
+
+### Added:
+
+- Add ChroQueTas tool for fungi AMR detection
+- Add ChroQueTas species list as a resource for species-specific AMR
+- Add hyperlinks to species identity figure in report
+
+### Fixed:
+
+- Fix output for qc_failed_assemblies.txt
+- Fix version output by KmerResistance
+- Fix dataflow so that samples mixed with fungi and bacteria are input into both fungi and bacteria AMR tools
+
+### Changed:
+
+- Change shell directives for Flye to ignore errors and output empty assembly file if tool fails
+- Update report disclaimer for resistant phenotypes
+- Update docs to include ChroQueTas
+- Change dataflow into CoverM to avoid mismatched assemblies/reads
+- Change sylph/sketch to local modules
+
+### Removed:
+
+- Remove lab-based DNA extraction and sequencing methods boilerplate from report template
+
 ## v0.2.0 (September 2025)
 
 This release reformatted the codebase from Snakemake to Nextflow

@@ -15,10 +15,11 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "profile.tsv", checkIfExists: true)
                 input[1] = file(params.pointfinder_orgs, checkIfExists: true)
-                input[2] = 2
-                input[3] = file("${projectDir}/tests/test_data/samples.tsv", checkIfExists: true)
+                input[2] = file(params.chroquetas_orgs, checkIfExists: true)
+                input[3] = 2
+                input[4] = file(params.modules_testdata_base_path + "samples.tsv", checkIfExists: true)
                 """
             }
         }
@@ -28,8 +29,8 @@ nextflow_process {
                 { assert process.success },
                 { assert snapshot(process.out).match() },
                 { assert snapshot(process.out.versions).match("versions") },
-                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR22957083\tStreptococcus pyogenes\t") },
-                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR26162843\tEscherichia coli\tescherichia_coli") },
+                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR22957083\tStreptococcus pyogenes\t\t") },
+                { assert path(process.out.spp_assigned.get(0)).text.contains("SRR26162843\tEscherichia coli\tescherichia_coli\t") },
             )
         }
 
@@ -42,10 +43,11 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "profile.tsv", checkIfExists: true)
                 input[1] = file(params.pointfinder_orgs, checkIfExists: true)
-                input[2] = 2
-                input[3] = file("${projectDir}/tests/test_data/samples.tsv", checkIfExists: true)
+                input[2] = file(params.chroquetas_orgs, checkIfExists: true)
+                input[3] = 2
+                input[4] = file(params.modules_testdata_base_path + "samples.tsv", checkIfExists: true)
                 """
             }
         }

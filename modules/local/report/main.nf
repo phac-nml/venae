@@ -15,6 +15,7 @@ process GENERATE_REPORT {
     path(genomesize)
     path(failed)
     path(staramr)
+    path(chroquetas)
     path(kmer)
     path(cge_key)
     path(clsi_key)
@@ -50,6 +51,7 @@ process GENERATE_REPORT {
             genomesize="${genomesize}", \
             failed="${failed}", \
             staramr="${staramr}", \
+            chroquetas="${chroquetas}", \
             kmer="${kmer}", \
             cgekey="${cge_key}", \
             clsikey="${clsi_key}", \

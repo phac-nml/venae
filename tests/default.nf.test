@@ -9,7 +9,7 @@ nextflow_pipeline {
 
         when {
             params {
-                outdir      = "results"
+                outdir = "${outputDir}"
             }
         }
         then {
@@ -26,8 +26,8 @@ nextflow_pipeline {
 
         when {
             params {
-                input       = "${projectDir}/tests/test_data/samples_missing.tsv"
-                outdir      = "results"
+                input  = "${projectDir}/tests/test_data/samples_missing.tsv"
+                outdir = "${outputDir}"
             }
         }
         then {

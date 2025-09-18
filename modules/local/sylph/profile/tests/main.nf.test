@@ -11,7 +11,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/SRR22957083_cleanfilt2k.fastq.gz.sylsp", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "SRR22957083_cleanfilt2k.fastq.gz.sylsp", checkIfExists: true)
                 input[1] = file(params.sylph_db_bac, checkIfExists: true)
                 input[2] = file(params.sylph_db_fungi, checkIfExists: true)
                 """
@@ -33,7 +33,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/SRR22957083_cleanfilt2k.fastq.gz.sylsp", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "SRR22957083_cleanfilt2k.fastq.gz.sylsp", checkIfExists: true)
                 input[1] = file(params.sylph_db_bac, checkIfExists: true)
                 input[2] = file(params.sylph_db_fungi, checkIfExists: true)
                 """

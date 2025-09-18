@@ -1,0 +1,54 @@
+nextflow_process {
+
+    name "Test Process CHROQUETAS"
+    script "../main.nf"
+    process "CHROQUETAS"
+    tag "modules"
+    tag "chroquetas"
+
+    test("Candida albicans - genome.fa.gz") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test', single_end:true ], // meta map
+                    file(params.modules_testdata_base_path + "Calbicans_SRR13587609.fasta.gz", checkIfExists: true),
+                    "Candida_albicans"
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("Candida albicans - genome.fa.gz - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test', single_end:true ], // meta map
+                    file(params.modules_testdata_base_path + "Calbicans_SRR13587609.fasta.gz", checkIfExists: true),
+                    "Candida_albicans"
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

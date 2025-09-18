@@ -12,4 +12,3 @@ adaptivecard.json
 slackreport.json
 ro-crate-metadata.json
 tests/test_data/report.html
-*.njs

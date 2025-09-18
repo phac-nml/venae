@@ -52,7 +52,7 @@ if not data:
         empty.close
         pass
     with open(os.path.join("spp_fungi_samples.tsv"), mode='w') as empty:
-        empty.write('sample\tspp_ID\tpointfinder_organism')
+        empty.write('sample\tspp_ID\tchroquetas_organism')
         empty.close
         pass
     sys.exit(0)
@@ -80,13 +80,23 @@ with open(os.path.join("pointfinder_organism.tsv"), mode='r') as infile:
     reader = csv.reader(infile, delimiter="\t")
     stardict = {rows[0]:rows[1] for rows in reader}
 
+# import key-value list and create dictionary for staramr
+with open(os.path.join("chroquetas_organism.tsv"), mode='r') as infile:
+    reader = csv.reader(infile, delimiter="\t")
+    chrodict = {rows[0]:rows[1] for rows in reader}
+
 # query dictionary and add new column
 qq = q.copy()
 qq["pointfinder_organism"]=q["spp_ID"].apply(lambda x: stardict.get(x))
+qq["chroquetas_organism"]=q["spp_ID"].apply(lambda x: chrodict.get(x))
 
 # concatenate pointfinder results
 q_pf = qq[qq['pointfinder_organism'].notnull()]
-q_pf_concat = q_pf_concat = q_pf.groupby('sample')['pointfinder_organism'].apply(lambda x: ','.join(x)).reset_index()
+q_pf_concat = q_pf.groupby('sample')['pointfinder_organism'].apply(lambda x: ','.join(x)).reset_index()
+
+# concatenate chroquetas results
+q_chro = qq[qq['chroquetas_organism'].notnull()]
+q_chro_concat = q_chro.groupby('sample')['chroquetas_organism'].apply(lambda x: ','.join(x)).reset_index()
 
 # concatenate species ID
 q_spp_concat = qq.groupby('sample')['spp_ID'].apply(lambda x: ','.join(x)).reset_index()
@@ -94,15 +104,16 @@ q_spp_concat = qq.groupby('sample')['spp_ID'].apply(lambda x: ','.join(x)).reset
 # join to samples list
 q_spp_joined = pd.merge(samples, q_spp_concat, on="sample", how = "left")
 collapsed = pd.merge(q_spp_joined, q_pf_concat, on="sample", how = "left")
+collapsed_again = pd.merge(collapsed, q_chro_concat, on="sample", how = "left")
 
 # clean up output to get unique values
-collapsed_nodup = collapsed.drop_duplicates()
+collapsed_nodup = collapsed_again.drop_duplicates()
 
 # output assigned species
 collapsed_nodup.to_csv(os.path.join("spp_assigned.tsv"), sep="\t", index=False)
 
 # print fungi samples to separate file
-fungi = ['Nakaseomyces glabratus', 'Candida albicans', 'Candida auris', 'Candida parapsilosis', 'Candida orthopsilosis']
-fungi_df = qq[qq['spp_ID'].isin(fungi)]
+fungi = list(chrodict.keys())
+fungi.remove("genus_species")
+fungi_df = collapsed_nodup[collapsed_nodup['spp_ID'].str.contains('|'.join(fungi))].drop(columns = "pointfinder_organism")
 fungi_df.to_csv(os.path.join("spp_fungi_samples.tsv"), sep="\t", index=False)
-

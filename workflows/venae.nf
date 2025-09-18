@@ -28,6 +28,8 @@ include { SYLPHTAX_TAXPROF } from '../modules/local/sylphtax/taxprof/main'
 include { ASSIGN_ORGANISM_AMR } from '../modules/local/assign_organism_amr/main'
 include { STARAMR_SEARCH } from '../modules/nf-core/staramr/search/main'
 include { STARAMR_CONCATENATE } from '../modules/local/utils/main'
+include { CHROQUETAS } from '../modules/local/chroquetas/main'
+include { CHROQUETAS_CONCATENATE } from '../modules/local/utils/main'
 include { KMERRESISTANCE } from '../modules/local/kmerresistance/main'
 include { KMERRESISTANCE_CONCATENATE } from '../modules/local/utils/main'
 include { ABRICATE_RUN } from '../modules/nf-core/abricate/run/main'
@@ -53,6 +55,7 @@ ch_kmerresistance_db_dir            = file(params.kmerresistance_db_arg).parent
 ch_kmerresistance_db_arg_name       = file(params.kmerresistance_db_arg).name
 ch_kmerresistance_db_spp_name       = file(params.kmerresistance_db_spp).name
 ch_pointfinder_orgs                 = file(params.pointfinder_orgs, checkIfExists: true)
+ch_chroquetas_orgs                 = file(params.chroquetas_orgs, checkIfExists: true)
 ch_emmtyper_db_dir                  = file(params.emmtyper_db).parent
 ch_emmtyper_db_name                 = file(params.emmtyper_db).name
 
@@ -139,14 +142,16 @@ workflow VENAE {
     ch_assembly_status.fail.view { v -> "$v has failed assembly"}
 
     ch_assembly_status.fail
-        .map {meta, fasta -> meta}
+        .map {meta, fasta -> meta.id}
         .collectFile(name: "qc_failed_assemblies.txt", newLine: true, storeDir: params.outdir)
         .set {ch_assembly_failed}
 
     // //
     // // MODULE: Run CoverM to output actual coverage for each completed assembly
     // //
-    COVERM_GENOME(NOHUMAN.out.reads, ch_assembly_status.pass)
+    ch_reads_genome = NOHUMAN.out.reads
+        .join(ch_assembly_status.pass)
+    COVERM_GENOME(ch_reads_genome)
     ch_versions = ch_versions.mix(COVERM_GENOME.out.versions.first())
 
     // Concatenate coverage reports
@@ -202,14 +207,14 @@ workflow VENAE {
     // //
     // // MODULE: Run python script to assign organism parameter for AMR tools
     // //
-    ASSIGN_ORGANISM_AMR(SYLPH_PROFILE.out.profile_out, ch_pointfinder_orgs, params.spp_detection_percent_threshold, file(params.input))
+    ASSIGN_ORGANISM_AMR(SYLPH_PROFILE.out.profile_out, ch_pointfinder_orgs, ch_chroquetas_orgs, params.spp_detection_percent_threshold, file(params.input))
     ch_versions = ch_versions.mix(ASSIGN_ORGANISM_AMR.out.versions)
 
     // Get list of samples that passed assembly
     ASSIGN_ORGANISM_AMR.out.spp_assigned
                     .splitCsv(header: true, sep: '\t')
                     //.view { v -> "$v is csv"}
-                    .map { row -> tuple(row.sample, row.spp_ID, row.pointfinder_organism) }
+                    .map { row -> tuple(row.sample, row.spp_ID, row.pointfinder_organism, row.chroquetas_organism) }
                     //.view { v -> "$v is mapped"}
                     .set { ch_species_pointfinder }
 
@@ -222,13 +227,13 @@ workflow VENAE {
     ch_species_pointfinder
                     .join(ch_assemblies_passed)
                     //.view { v -> "$v is joined"}
-                    .map { sample, spp_ID, org, meta, assembly -> [meta, spp_ID, org, assembly] }
+                    .map { sample, spp_ID, org, org2, meta, assembly -> [meta, spp_ID, org, org2, assembly] }
                     //.view { v -> "$v is mapped again"}
                     .set {ch_sample_spp_assigned}
 
     // Get channels of samples for specific organism typing
     ch_sample_spp_assigned
-                    .branch { sample, spp, pointfinder_organism, assembly ->
+                    .branch { sample, spp, pointfinder_organism, chroquetas_organism, assembly ->
                             staph: spp.contains("Staphylococcus aureus")
                                 return tuple(sample, assembly)
                             strep: spp.contains("Streptococcus pyogenes")
@@ -240,18 +245,24 @@ workflow VENAE {
 
     ch_typing.staph.view { v -> "$v is Staphylococcus aureus"}
     ch_typing.strep.view { v -> "$v is Streptococcus pyogenes"}
-    ch_typing.other.view { v -> "$v is other species"}
 
-    // Get channel for fungi samples that passed assembly to remove from AMR analysis
+    // Get channel for fungi samples that passed assembly
     ch_sample_spp_assigned
-                    .branch { sample, spp, pointfinder_organism, assembly ->
-                            fungi: spp.contains("Candida") | spp.contains("Nakaseomyces")
-                                return tuple(sample, assembly)
-                            bacteria: true
+                    .branch { sample, spp, pointfinder_organism, chroquetas_organism, assembly ->
+                            // if chroquetas_organism exists
+                            fungi: chroquetas_organism
+                                return tuple(sample, assembly, chroquetas_organism)}
+                    .set{ch_spp_fungi}
+    ch_spp_fungi.fungi.view { v -> "$v is fungi"}
+
+    // Get channel for bacteria samples that passed assembly
+    ch_sample_spp_assigned
+                    .branch { sample, spp, pointfinder_organism, chroquetas_organism, assembly ->
+                            // if pointfinder_organism exists or if there is no chroquetas_organism
+                            bacteria: pointfinder_organism || !chroquetas_organism
                                 return tuple(sample, assembly, pointfinder_organism)}
-                    .set{ch_spp_amr}
-    ch_spp_amr.bacteria.view { v -> "$v is bacteria"}
-    ch_spp_amr.fungi.view { v -> "$v is fungi"}
+                    .set{ch_spp_bacteria}
+    ch_spp_bacteria.bacteria.view { v -> "$v is bacteria"}
 
     // //
     // // MODULE: Run emmtyper for Streptococcus pyogenes typing
@@ -298,7 +309,7 @@ workflow VENAE {
     //
     // MODULE: Run StarAMR for assembly-based AMR detection
     //
-    STARAMR_SEARCH(ch_spp_amr.bacteria)
+    STARAMR_SEARCH(ch_spp_bacteria.bacteria)
     ch_versions = ch_versions.mix(STARAMR_SEARCH.out.versions)
 
     // Concatenate AMR detection with KmerResistance reports
@@ -307,6 +318,19 @@ workflow VENAE {
         .collect()
         .set { ch_staramr_report }
     STARAMR_CONCATENATE(ch_staramr_report)
+
+    //
+    // MODULE: Run ChroQueTas for fungi assembly-based AMR
+    //
+    CHROQUETAS(ch_spp_fungi.fungi)
+    ch_versions = ch_versions.mix(CHROQUETAS.out.versions)
+
+    // Concatenate AMR detection with KmerResistance reports
+    CHROQUETAS.out.summary_txt
+        .map{ meta, report -> report }
+        .collect()
+        .set { ch_chroquetas_report }
+    CHROQUETAS_CONCATENATE(ch_chroquetas_report)
 
     //
     // MODULE: Generate output report summarizing all results
@@ -321,6 +345,7 @@ workflow VENAE {
     ch_staph = ABRICATE_CONCATENATE.out.report.ifEmpty(file(params.no_staph))
     ch_strep = EMMTYPER_CONCATENATE.out.report.ifEmpty(file(params.no_strep))
     ch_staramr = STARAMR_CONCATENATE.out.report.ifEmpty(file(params.no_staramr))
+    ch_chroquetas = CHROQUETAS_CONCATENATE.out.report.ifEmpty(file(params.no_chroquetas))
     ch_kmerres = KMERRESISTANCE_CONCATENATE.out.report.ifEmpty(file(params.no_kmerres))
 
     GENERATE_REPORT(
@@ -334,6 +359,7 @@ workflow VENAE {
         ch_genomesize,
         ch_failed_assemblies,
         ch_staramr,
+        ch_chroquetas,
         ch_kmerres,
         ch_cge,
         ch_clsi,

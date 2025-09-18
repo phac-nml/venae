@@ -8,8 +8,7 @@ process COVERM_GENOME {
         'biocontainers/coverm:0.7.0--h07ea13f_0' }"
 
     input:
-    tuple val(meta), path(reads)
-    tuple val(meta), path(assembly)
+    tuple val(meta), path(reads), path(assembly)
 
     output:
     tuple val(meta), path("*_coverage.tsv"), emit: report
@@ -24,10 +23,10 @@ process COVERM_GENOME {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     coverm genome \\
-        --single $reads \\
-        -f $assembly \\
+        --single ${reads} \\
+        -f ${assembly} \\
         -m mean length \\
-        $args \\
+        ${args} \\
         -o ${prefix}_coverage.tsv
 
     cat <<-END_VERSIONS > versions.yml

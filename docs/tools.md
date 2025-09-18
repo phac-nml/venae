@@ -16,11 +16,12 @@ This pipeline currently depends on the following programs and tools:
 6. [Flye](https://github.com/fenderglass/Flye) v2.9.4 (long-read assembler)
 7. [StarAMR](https://github.com/phac-nml/staramr) v0.11.0 (assembly-based antimicrobial resistance gene detection)
 8. [KmerResistance](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/) v2.2.0 (read-based antimicrobial resistance gene detection)
-9. [VFDB via ABRicate](https://github.com/tseemann/abricate) v1.0.1 (assembly-based virulence gene detection in _Staphylococcus aureus_)
-10. [emmtyper](https://github.com/MDU-PHL/emmtyper) v0.2.0 (assembly-based _emm_ typing in _Streptococcus pyogenes_)
-11. [CheckM2](https://github.com/chklovski/CheckM2) v1.0.2 (assembly completeness score for bacteria)
-12. [CoverM](https://github.com/wwood/CoverM) v0.7.0 (assembly coverage metrics)
-13. [R](https://www.r-project.org/) v4.4.3 (final results report)
+9. [ChroQueTas](https://github.com/nmquijada/ChroQueTas) v1.0.0 (assembly-based antifungal resistance mutation detection)
+10. [VFDB via ABRicate](https://github.com/tseemann/abricate) v1.0.1 (assembly-based virulence gene detection in _Staphylococcus aureus_)
+11. [emmtyper](https://github.com/MDU-PHL/emmtyper) v0.2.0 (assembly-based _emm_ typing in _Streptococcus pyogenes_)
+12. [CheckM2](https://github.com/chklovski/CheckM2) v1.0.2 (assembly completeness score for bacteria)
+13. [CoverM](https://github.com/wwood/CoverM) v0.7.0 (assembly coverage metrics)
+14. [R](https://www.r-project.org/) v4.4.3 (final results report)
 
 ## Editing tool parameters
 
@@ -34,12 +35,13 @@ This pipeline currently makes use of the following default databases and files:
 2. [Kraken2 PlusPF database](https://benlangmead.github.io/aws-indexes/k2): plusPF-2024-12-28 8 Gb (RefSeq archaea, bacteria, viral, plasmid, human, protozoa, fungi, UniVec_Core)
 3. [CheckM2 DIAMOND reference database](https://zenodo.org/records/5571251) v2
 4. [StarAMR databases](https://github.com/phac-nml/staramr?tab=readme-ov-file#database-info-1): ResFinder Tue, 06 Aug 2024 11:26 (db commit d1e607b8989260c7b6a3fbce8fa3204ecfc09022), PointFinder Thu, 08 Aug 2024 11:57 (db commit 694919f59a38980204009e7ade76bf319cb7df0b), MLST v2.23.0 with db updated 2024-12-20
-5. [VFDB database as part of ABRicate](https://github.com/tseemann/abricate?tab=readme-ov-file#databases): 2024-10-29 (4370 sequences)
-6. [ResFinder database](https://bitbucket.org/genomicepidemiology/resfinder_db/src/master/): v2.4.0 (2024-08-06) (indexed with kma using `-m 14` flag)
-7. KmerFinder bacteria species database placeholder. See [the installation documentation](installation.md#kmerresistance) for more information.
-8. [Sylph databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases): bacteria dbv1 GTDB r220 (113,104 genomes 2024-04-24), fungal RefSeq v0.3 -c200 2024-07-25 (595 genomes)
-9. [Sylph taxonomy databases](https://github.com/bluenote-1577/sylph-tax): bacteria GTDB r220, fungal RefSeq 2024-07-25
-10. [emmtyper databases](https://ftp.cdc.gov/pub/infectious_diseases/biotech/tsemm/): 2024-10-29 (2570 sequences)
+5. [FungAMR database as part of ChroQueTas](https://github.com/Landrylab/FungAMR): v1.0.0 (June 2025)
+6. [VFDB database as part of ABRicate](https://github.com/tseemann/abricate?tab=readme-ov-file#databases): 2024-10-29 (4370 sequences)
+7. [ResFinder database](https://bitbucket.org/genomicepidemiology/resfinder_db/src/master/): v2.4.0 (2024-08-06) (indexed with kma using `-m 14` flag)
+8. KmerFinder bacteria species database placeholder. See [the installation documentation](installation.md#kmerresistance) for more information.
+9. [Sylph databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases): bacteria dbv1 GTDB r220 (113,104 genomes 2024-04-24), fungal RefSeq v0.3 -c200 2024-07-25 (595 genomes)
+10. [Sylph taxonomy databases](https://github.com/bluenote-1577/sylph-tax): bacteria GTDB r220, fungal RefSeq 2024-07-25
+11. [emmtyper databases](https://ftp.cdc.gov/pub/infectious_diseases/biotech/tsemm/): 2024-10-29 (2570 sequences)
 
 Some tools will automatically install their own databases (ABRicate, StarAMR), and other small databases are included in the pipeline download (ResFinder, KmerFinder, emmtyper). To manually install required databases for other tools, see [the installation documentation](installation.md#database-installation).
 
@@ -67,7 +69,7 @@ Based on internal validations, both Kraken2 and Sylph accurately assess organism
 
 [Metabuli](https://github.com/steineggerlab/Metabuli) is a newer profiler that was evaluated for species identification (read the paper [here](https://doi.org/10.1038/s41592-024-02273-y)). However, this tool was eliminated from the pipeline as currently there are no suported fungi databases so requires building a custom fungi database. The resulting database of fungi and bacteria RefSeq organisms used for testing here was quite large (~ 470 Gb) and the pre-built GTDB and RefSeq bacteria databases were also > 100 Gb each. Databases that size will unreasonable for some users, and tool runtime was quite high likely due to database size.
 
-### KmerResistance
+### KmerResistance (bacteria, read-based AMR)
 
 Reads (all sizes and Q-scores) are scanned for AMR using KmerResistance after host removal. The detection limit to this tool is a single read so results should be interpreted with caution, particularly for specific allele types.
 
@@ -75,15 +77,23 @@ KMA v1.4.9 includes a preset flag `-ont` which has been optimized for gene query
 
 For more details about the KmerResistance databases, see [the installation documentation](installation.md#kmerresistance)
 
-### StarAMR
+### StarAMR (bacteria, assembly-based AMR)
 
-This program has the option to specify an `--pointfinder-organism` parameter which leads to better antimicrobial resistance gene predictions. Currently, this workflow pulls the list of species identified for each sample and searches against a list of organisms included in StarAMR (`data/pointfinder_organism.tsv`) to assign the correct organism for each sample if applicable (`rule spp_assign_organism_amr` using the `bin/assign_organism_amr.py` script). It then includes the `--pointfinder-organism` parameter (using the `get_pointfinder_organism` function) in the StarAMR call (`rule staramr`) if a matching organism was found in the list.
+This program has the option to specify an `--pointfinder-organism` parameter which leads to better antimicrobial resistance gene predictions. Currently, this workflow pulls the list of species identified for each sample and searches against a list of organisms included in StarAMR (`data/pointfinder_organism.tsv`) to assign the correct organism for each sample if applicable (`process ASSIGN_ORGANISM_AMR` using the `bin/assign_organism_amr.py` script). It then includes the `--pointfinder-organism` parameter in the StarAMR call (`process STARAMR_SEARCH`) if a matching organism was found in the list.
 
 This will currently not work if there are two matching organism hits in the same sample (i.e. a mixed sample of two or more organisms that are represented in the PointFinder database). Only one will be run.
 
 There are probably more elegant ways of doing this, but this hacky-python-beginner solution is working for now!
 
 For the list of available PointFinder organisms, see [the list on the StarAMR GitHub page](https://github.com/phac-nml/staramr?tab=readme-ov-file#caveats).
+
+### ChroQueTas (fungi, assembly-based AMR)
+
+This program requires a `--species` parameter which specifies a list of proteins to screen. Currently, this workflow pulls the list of species identified for each sample and searches against a list of organisms included in ChroQueTas (`data/chroquetas_organism.tsv`) to assign the correct organism for each sample if applicable (`process ASSIGN_ORGANISM_AMR` using the `bin/assign_organism_amr.py` script). The workflow will then use that value for the `--species` argument in the ChroQueTas call (`process CHROQUETAS`) if a matching organism was found in the list.
+
+This will currently not work if there are two matching organism hits in the same sample (i.e. a mixed sample of two or more organisms that are represented in the FungAMR database). Only one will be run.
+
+In addition, if ChroQueTas cannot find any of the reference proteins associated with that species in the target assembly (possibly due to an incomplete assembly from low read data), the program will output an error and no results will be reported.
 
 ### Outputting HTML results report
 

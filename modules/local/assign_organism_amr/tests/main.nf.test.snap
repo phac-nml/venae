@@ -3,22 +3,22 @@
         "content": [
             {
                 "0": [
-                    "spp_assigned.tsv:md5,8d7ce7c938911fd2d4dee58794724f7f"
+                    "spp_assigned.tsv:md5,be7f9e6c86fb6f476140a2dc33f42f20"
                 ],
                 "1": [
-                    "spp_fungi_samples.tsv:md5,48678834f07d88840733ff6b80ac3b8e"
+                    "spp_fungi_samples.tsv:md5,4a4138e202d34b517ede898126510bb3"
                 ],
                 "2": [
-                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                    "versions.yml:md5,3230f29f9dae6586e2388a55a597439e"
                 ],
                 "fungi": [
-                    "spp_fungi_samples.tsv:md5,48678834f07d88840733ff6b80ac3b8e"
+                    "spp_fungi_samples.tsv:md5,4a4138e202d34b517ede898126510bb3"
                 ],
                 "spp_assigned": [
-                    "spp_assigned.tsv:md5,8d7ce7c938911fd2d4dee58794724f7f"
+                    "spp_assigned.tsv:md5,be7f9e6c86fb6f476140a2dc33f42f20"
                 ],
                 "versions": [
-                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                    "versions.yml:md5,3230f29f9dae6586e2388a55a597439e"
                 ]
             }
         ],
@@ -26,19 +26,19 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2025-08-20T12:27:00.104609261"
+        "timestamp": "2025-09-02T14:02:26.547251632"
     },
     "versions": {
         "content": [
             [
-                "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                "versions.yml:md5,3230f29f9dae6586e2388a55a597439e"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2025-08-20T12:27:00.199247804"
+        "timestamp": "2025-09-02T14:02:26.698800496"
     },
     "Run assign_organism_amr - stub": {
         "content": [
@@ -50,7 +50,7 @@
                     "spp_fungi_samples.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 "2": [
-                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                    "versions.yml:md5,3230f29f9dae6586e2388a55a597439e"
                 ],
                 "fungi": [
                     "spp_fungi_samples.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -59,7 +59,7 @@
                     "spp_assigned.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 "versions": [
-                    "versions.yml:md5,e5e8e205bfa116a6b06718cc66c758b3"
+                    "versions.yml:md5,3230f29f9dae6586e2388a55a597439e"
                 ]
             }
         ],
@@ -67,6 +67,6 @@
             "nf-test": "0.9.2",
             "nextflow": "24.04.4"
         },
-        "timestamp": "2025-08-20T12:27:21.353417297"
+        "timestamp": "2025-09-02T14:02:56.548944311"
     }
 }

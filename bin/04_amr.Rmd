@@ -55,9 +55,9 @@ fungi <- import_fungi_list((params$fungi))
 ## ANTIMICROBIAL RESISTANCE  {-}
 
 
-`r if(length(failed_samples) == 0 ){"All samples had enough reads for assembly-based antmicrobial resistance gene detection with StarAMR and AMRFinder"} else {paste("**NOTE**: The following sample(s) did not have enough reads for assembly-based antimicrobial resistance gene detection with StarAMR and AMRFinder:", paste(unlist(failed %>% pull(sample)), collapse=", "))}`
+`r if(length(failed_samples) == 0 ){"All samples had enough reads for assembly-based antmicrobial resistance gene detection."} else {paste("**NOTE**: The following sample(s) did not have enough reads for assembly-based antimicrobial resistance gene detection:", paste(unlist(failed %>% pull(sample)), collapse=", "))}`
 
-### StarAMR (assembly-based) {-}
+### StarAMR (bacteria, assembly-based) {-}
 
 ```{r staramr2, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis'}
 
@@ -102,7 +102,7 @@ if(!file.exists(params$staramr) || file.size((params$staramr)) == 0){
 }
 ```
 
-### KmerResistance (read-based) {-}
+### KmerResistance (bacteria, read-based) {-}
 
 ```{r kmerres, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis'}
 
@@ -148,6 +148,113 @@ if(file.size((params$kmer)) == 0){
     kable_styling(bootstrap_options = c("striped", "hover")) %>%
     scroll_box(height = "500px") %>%
     footnote(symbol = c("Percent identity and percent coverage are relative to the Centre for Genomic Epidemiology ResFinder database. Percent identity below 98 % and percent coverage below 90 % are flagged in red and should be interpreted with caution.", "Predicted phenotype is derived from the Centre for Genomic Epidemiology ResFinder database and does not represent all resistant determinants or point mutations. These phenotypes have not been completely validated in all organisms and may not represent the true phenotype for each antimicrobial."))
+}
+
+```
+
+### ChroQueTas (fungi, assembly-based) {-}
+
+```{r chroquetas, message=FALSE, echo=FALSE, warning=FALSE, crop = TRUE, results='asis'}
+
+# if no fungal organisms detected
+if(length(fungi) == 0){
+
+  cat(paste("No fungal organisms detected."))
+
+} else {
+
+  # import fungi samples to get complete list of samples
+  samples <- tibble(sample = fungi)
+
+  # If fungi in failed assemblies (not enough read coverage)
+  if (length(failed_samples) > 0 && dim(subset(samples, sample %in% failed_samples))[1] != 0 ){
+
+    # don't need to print failed samples as its already printed above
+    # remove failed samples from list
+    fungi_samples <- samples %>%
+      filter(!(sample %in% failed_samples))
+
+  } else {
+
+  # if no failed fungi samples, all are valid
+  fungi_samples <- samples
+
+  }
+
+  # If no AMR genes run on any samples
+  if(file.exists(params$chroquetas) && file.size((params$chroquetas)) == 0){
+
+    # if there are only valid samples, print list with no AMR genes
+    if(dim(fungi_samples)[1] != 0){
+
+      cat(paste("Not enough data to perform AMR mutation detection (due to incomplete assembly) in the following isolate(s): ", paste(unlist(fungi_samples), collapse = ", "), "\n", sep = "\n\n"))
+
+      }
+
+  } else {
+
+  # import chroquetas file
+  df <- import_chroquetas(params$chroquetas)
+
+    # join to non-failed sample list
+    df1 <- left_join(fungi_samples, df, by = "sample")
+
+    # If one isolate had chroquetas fail due to missing reference sequences:
+    none <- df1 %>%
+      filter(is.na(protein)) %>%
+      pull(sample)
+
+    if(length(none) != 0){
+      cat(paste("Not enough data to perform AMR mutation detection (due to incomplete assembly) in the following isolate(s): ", paste(unlist(none), collapse = ", "), "\n", sep = "\n\n"))
+    }
+
+    # If one isolate has no AMR mutations detected:
+    nohits <- df1 %>%
+      filter(protein == "None") %>%
+      pull(sample)
+
+    if(length(nohits) != 0){
+      cat(paste("No AMR mutations detected in the following isolate(s): ", paste(unlist(nohits), collapse = ", "), "\n", sep = "\n\n"))
+    }
+
+    # remove those with no hits
+    df2 <- df1 %>%
+      filter(protein != "None")
+
+    # do not print table if there are no hits
+    if(dim(df2)[1] > 0){
+
+    # format table
+    df3 <- df2 %>%
+      mutate(resistance_confidence = case_when(
+        str_detect(resistance_confidence, "^1") ~ cell_spec(resistance_confidence, "html", color = "#00BFC4", bold = TRUE),
+        str_detect(resistance_confidence, "^2") ~ cell_spec(resistance_confidence, "html", color = "#00BFC4", bold = TRUE),
+        str_detect(resistance_confidence, "^3") ~ cell_spec(resistance_confidence, "html", color = "#00BFC4", bold = TRUE),
+        str_detect(resistance_confidence, "^4") ~ cell_spec(resistance_confidence, "html", color = "#00BFC4", bold = TRUE),
+        str_detect(resistance_confidence, "^5") ~ cell_spec(resistance_confidence, "html", color = "#F8766D", bold = TRUE),
+        str_detect(resistance_confidence, "^6") ~ cell_spec(resistance_confidence, "html", color = "#F8766D", bold = TRUE),
+        str_detect(resistance_confidence, "^7") ~ cell_spec(resistance_confidence, "html", color = "#F8766D", bold = TRUE),
+        str_detect(resistance_confidence, "^8") ~ cell_spec(resistance_confidence, "html", color = "#F8766D", bold = TRUE),
+        TRUE ~ cell_spec(resistance_confidence, "html"))) %>%
+      select(Sample = sample, Protein = protein, Mutation = mutation, `Resistance confidence score` = resistance_confidence, `Predicted phenotype` = phenotype) %>%
+      mutate(Protein = ifelse(Protein != "None" & !is.na(Protein), cell_spec(Protein, "html", bold = TRUE), cell_spec(Protein, "html")))
+
+    # add footnotes
+    names(df3)[4] <- paste0(names(df3)[4], footnote_marker_symbol(1))
+    names(df3)[5] <- paste0(names(df3)[5], footnote_marker_symbol(2))
+
+    df3 %>%
+      # mutate(`Number of reads` = color_bar("orange")(`Number of reads`)) %>%
+      kable("html", escape = "F", digits = 2, align = "l", caption = "Antimicrobial resistance mutations detected by ChroQueTas") %>%
+      kable_styling(bootstrap_options = c("striped", "hover")) %>%
+      scroll_box(height = "500px") %>%
+      #collapse_rows(columns = 1:3, valign = "middle") %>%
+      footnote(symbol = c(
+        "Confidence scores are derived from the ChroQueTas tool, and blue colour indicates scores with strong evidence (1-4), and red indicates scores with weak evidence (5-8). NA indicates no data. For more information on confidence scores, see [here](https://github.com/nmquijada/ChroQueTas/wiki/Confidence-score-for-antimicrobial-resistance).",
+        "Predicted phenotype is derived from the FungAMR database and does not represent all resistant determinants or point mutations. These phenotypes have not been validated and may not represent the true phenotype for each antimicrobial. Predicted resistance should be confirmed by phenotypic susceptibility testing."))
+
+    }
+  }
 }
 
 ```

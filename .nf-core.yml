@@ -12,6 +12,7 @@ lint:
     - .github/workflows/linting_comment.yml
     - .github/workflows/linting.yml
     - docs/README.md
+    - LICENSE
   nextflow_config:
     - process.cpus
     - process.memory
@@ -25,6 +26,9 @@ lint:
     - validation.help.afterText
     - validation.summary.beforeText
     - validation.summary.afterText
+    - config_defaults:
+        - params.db_dir
+        - params.resource_dir
   files_exist:
     - CODE_OF_CONDUCT.md
     - assets/nf-core-venae_logo_light.png
@@ -38,6 +42,9 @@ lint:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
     - conf/test_full.config
     - conf/igenomes.config
     - conf/igenomes_ignored.config
@@ -47,12 +54,11 @@ lint:
     - nextflow_badge
     - nfcore_template_badge
     - zenodo_release
-  included_configs: False
   actions_awsfulltest: False
   actions_awstest: False
   multiqc_config: False
   template_strings:
-    - tests/test_data/
+    - modules/local/utils/main.nf
   merge_markers: False
 
 template:

@@ -46,6 +46,7 @@
             "description": "The location of databases used by venae",
             "required": [
                 "pointfinder_orgs",
+                "chroquetas_orgs",
                 "emmtyper_db",
                 "kmerresistance_db_arg",
                 "kmerresistance_db_spp",
@@ -69,10 +70,24 @@
                     "exists": true,
                     "format": "directory-path"
                 },
+                "resource_dir": {
+                    "type": "string",
+                    "description": "Path to directory containing included data resources",
+                    "default": "data",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "directory-path"
+                },
                 "pointfinder_orgs": {
                     "type": "string",
                     "description": "Path to StarAMR PointFinder database for antimicrobial resistance gene detection",
-                    "default": "data/pointfinder_organism.tsv",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "format": "file-path"
+                },
+                "chroquetas_orgs": {
+                    "type": "string",
+                    "description": "Path to ChroQueTas species list for antimicrobial resistance gene detection",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path"
@@ -80,7 +95,6 @@
                 "emmtyper_db": {
                     "type": "string",
                     "description": "Path to emmtyper database for emm typing in Streptococcus pyogenes",
-                    "default": "data/db_emmtyper/emm_types_20250131.fasta",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path"
@@ -88,21 +102,18 @@
                 "kmerresistance_db_arg": {
                     "type": "string",
                     "description": "Path to KmerResistance ResFinder antimicrobial resistance database",
-                    "default": "data/db_kmerresistance/resfinder_v2.4.0",
                     "pattern": "^\\S+$",
                     "format": "file-path"
                 },
                 "kmerresistance_db_spp": {
                     "type": "string",
                     "description": "Path to KmerResistance KMA species placeholder database",
-                    "default": "data/db_kmerresistance/species_placeholder",
                     "pattern": "^\\S+$",
                     "format": "file-path"
                 },
                 "genomesize_key": {
                     "type": "string",
                     "description": "Path to key file with average genome size for each bacterial/fungal genus in NCBI",
-                    "default": "data/ncbi_genus_size.tsv",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path"
@@ -110,7 +121,6 @@
                 "cge_key": {
                     "type": "string",
                     "description": "Path to CGE phenotype key file for KmerResistance antimicrobial resistance detection",
-                    "default": "data/cge_key_20240612_phenotypes.txt",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path"
@@ -118,7 +128,6 @@
                 "clsi_key": {
                     "type": "string",
                     "description": "Path to CLSI organism key file for reportable antimicrobial phenotypes",
-                    "default": "data/clsi_key.txt",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path"
@@ -126,7 +135,6 @@
                 "clsi_tables": {
                     "type": "string",
                     "description": "Path to CLSI Table references for reportable antimicrobial phenotypes",
-                    "default": "data/Table1*.tsv",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "format": "file-path-pattern"
@@ -367,6 +375,15 @@
                     "type": "string",
                     "description": "Placeholder file for StarAMR",
                     "default": "amr_staramr_detailed_summary.tsv",
+                    "pattern": "^\\S+$",
+                    "format": "file-path",
+                    "fa_icon": "fas fa-file-circle-xmark",
+                    "hidden": true
+                },
+                "no_chroquetas": {
+                    "type": "string",
+                    "description": "Placeholder file for ChroQueTas",
+                    "default": "amr_chroquetas_summary.tsv",
                     "pattern": "^\\S+$",
                     "format": "file-path",
                     "fa_icon": "fas fa-file-circle-xmark",

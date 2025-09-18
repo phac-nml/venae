@@ -123,6 +123,31 @@ import_staramr <- function(x) {
 
 # = = = = = = = = = = = = = = = = =
 # PURPOSE:
+#   Import ChroQueTas results
+#
+# INPUT:
+#   Path to ChroQueTas file
+#
+# RETURN:
+#   Tibble with ChroQueTas data
+# = = = = = = = = = = = = = = = = =
+import_chroquetas <- function(x) {
+  read.csv(x, sep="\t", col.names = c("sample", "protein", "fragment", "position", "aa_ref", "aa_query", "phenotype"), header=FALSE, na.strings=c("","NA")) %>%
+    tibble() %>%
+    mutate(sample = str_remove(sample, "_assembly")) %>%
+    mutate(protein = str_replace(protein, "No AMR mutations found.*", "None")) %>%
+    mutate(mutation = ifelse(!is.na(position), paste0(aa_ref, position, aa_query), NA)) %>%
+    separate_longer_delim(phenotype, delim=",") %>%
+    mutate(confidence = str_remove_all(phenotype, ".*\\(|\\)")) %>%
+    #filter(str_detect(confidence, "^1/") | str_detect(confidence, "^2/") | str_detect(confidence, "^3/") | str_detect(confidence, "^4/")) %>%
+    mutate(resistance_confidence = str_remove(confidence, "/.*")) %>%
+    #mutate(susceptible_confidence = str_remove(confidence, ".*/")) %>%
+    mutate(phenotype = str_remove_all(phenotype, "\\(.*\\)")) %>%
+    select(sample, protein, mutation, resistance_confidence, phenotype)
+}
+
+# = = = = = = = = = = = = = = = = =
+# PURPOSE:
 #   Color text in report tables based on percentage values
 #
 # INPUT:
@@ -134,4 +159,3 @@ import_staramr <- function(x) {
 color_code_gene_percentage <- function(x, y) {
   ifelse(x < y, cell_spec(x, "html", color = "#F8766D", bold = TRUE), cell_spec(x, "html", color = "#00BFC4", bold = TRUE))
 }
-

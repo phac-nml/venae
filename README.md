@@ -22,7 +22,7 @@ This repository is the product of a GRDI-funded research project entitled **Rapi
 2. Species identification ([`sylph`](http://multiqc.info/) and [`Kraken2`](https://github.com/DerrickWood/kraken2))
 3. Assembly ([`Flye`](https://github.com/mikolmogorov/Flye))
 4. Species-specific typing ([`emmtyper`](https://github.com/MDU-PHL/emmtyper) and [`ABRicate`](https://github.com/tseemann/abricate))
-5. AMR detection ([`StarAMR`](https://github.com/phac-nml/staramr) and [`KmerResistance`](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/))
+5. AMR detection ([`StarAMR`](https://github.com/phac-nml/staramr), [`ChroQueTas`](https://github.com/nmquijada/ChroQueTas), and [`KmerResistance`](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/))
 6. Report
 
 ## Installation
@@ -137,8 +137,8 @@ This pipeline uses code and infrastructure developed and maintained by the [nf-c
 
 Copyright 2025 Government of Canada
 
-Licensed under the MIT License (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License at:
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License at:
 
-https://opensource.org/license/mit/
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

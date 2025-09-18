@@ -7,6 +7,7 @@ process ASSIGN_ORGANISM_AMR {
     input:
     path(sylph_profile)
     path(pointfinder_organism)
+    path(chroquetas_organism)
     val(threshold)
     path(samplelist)
 

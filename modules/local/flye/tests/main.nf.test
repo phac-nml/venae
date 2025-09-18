@@ -19,7 +19,7 @@ nextflow_process {
             process {
                 """
                 input[0] =  [ [ id:'test', single_end:true ], // meta map
-                                file("${projectDir}/tests/test_data/SRR26162843_subset_withhuman.fastq.gz", checkIfExists: true)
+                                file(params.modules_testdata_base_path + "SRR26162843_subset_withhuman.fastq.gz", checkIfExists: true)
                             ]
                 input[1] = "--nano-hq"
                 """
@@ -52,7 +52,7 @@ nextflow_process {
             process {
                 """
                 input[0] =  [ [ id:'test', single_end:true ], // meta map
-                                file("${projectDir}/tests/test_data/SRR26162843_subset_withhuman.fastq.gz", checkIfExists: true)
+                                file(params.modules_testdata_base_path + "SRR26162843_subset_withhuman.fastq.gz", checkIfExists: true)
                             ]
                 input[1] = "--nano-hq"
                 """

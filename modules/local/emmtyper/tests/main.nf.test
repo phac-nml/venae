@@ -15,7 +15,7 @@ nextflow_process {
                 """
                 input[0] = [
                     [ id:'test', single_end:true ], // meta map
-                    file("${projectDir}/tests/test_data/SRR22957083_assembly.fasta", checkIfExists: true)
+                    file(params.modules_testdata_base_path + "SRR22957083_assembly.fasta", checkIfExists: true)
                 ]
 
                 input[1] = file(params.emmtyper_db).parent
@@ -46,7 +46,7 @@ nextflow_process {
                 """
                 input[0] = [
                     [ id:'test', single_end:true ], // meta map
-                    file("${projectDir}/tests/test_data/SRR22957083_assembly.fasta", checkIfExists: true)
+                    file(params.modules_testdata_base_path + "SRR22957083_assembly.fasta", checkIfExists: true)
                 ]
 
                 input[1] = file(params.emmtyper_db).parent

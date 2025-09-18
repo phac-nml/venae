@@ -20,6 +20,11 @@ process NOHUMAN_STATS {
         sort | \
         sed '1i sample\treads_removed_percent' > "qc_host_removed.tsv"
     """
+
+    stub:
+    """
+    touch qc_host_removed.tsv
+    """
 }
 
 /*
@@ -40,6 +45,11 @@ process NANOPLOT_CLEAN_STATS {
     """
     # for cleaned reads
     grep -H "mean_\\|median_\\|number_of_reads\\|n50\\|number_of_bases" ${input_str} | tr -s '[:blank:]' |  sed 's#:#\t#g;s#_NanoStats.txt##g'  > qc_read_metrics_clean.tsv
+    """
+
+    stub:
+    """
+    touch qc_read_metrics_clean.tsv
     """
 }
 
@@ -70,6 +80,11 @@ process NANOQ_STATS {
     fi
     rm filt_temp.txt
     """
+
+    stub:
+    """
+    touch qc_read_metrics_cleanfilt.tsv
+    """
 }
 
 /*
@@ -89,6 +104,11 @@ process COVERM_CONCATENATE {
     def input_str = report instanceof List ? report.join(" ") : report
     """
     cat ${input_str} | sed 's#Genome.*##g' | awk 'NF' | sort > qc_assembly_coverage.tsv
+    """
+
+    stub:
+    """
+    touch qc_assembly_coverage.tsv
     """
 }
 
@@ -111,6 +131,11 @@ process KRAKEN2_SUMMARY {
     awk -F"\t" -v var="${meta.id}" '(\$4 == "S" || \$4 == "G" || \$4 == "O") && \$1 > ${threshold} || \$4 == "U" || \$4 == "R" || \$6 ~ /Homo sapiens/ {{print var"\tkraken2\t"\$0}}' \
             ${meta.id}.kraken2.report.txt | tr -s '[:blank:]' | sed 's#_std.kreport:##g;s#\\t #\\t#g' > ${meta.id}_spp.tsv
     """
+
+    stub:
+    """
+    touch ${meta.id}_spp.tsv
+    """
 }
 
 /*
@@ -127,10 +152,15 @@ process KRAKEN2_CONCATENATE {
     path("spp_kraken2_classification.tsv"), emit: report
 
     script:
-        def input_str = reports instanceof List ? reports.join(" ") : reports
-        """
-        cat ${input_str} > spp_kraken2_classification.tsv
-        """
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    cat ${input_str} > spp_kraken2_classification.tsv
+    """
+
+    stub:
+    """
+    touch spp_kraken2_classification.tsv
+    """
 }
 
 /*
@@ -141,16 +171,21 @@ process EMMTYPER_CONCATENATE {
     label 'process_quick'
 
     input:
-        path(reports)
+    path(reports)
 
     output:
-        path("typing_strep_pyo_emm.tsv"), emit: report
+    path("typing_strep_pyo_emm.tsv"), emit: report
 
     script:
-        def input_str = reports instanceof List ? reports.join(" ") : reports
-        """
-        cat ${input_str} > typing_strep_pyo_emm.tsv
-        """
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    cat ${input_str} > typing_strep_pyo_emm.tsv
+    """
+
+    stub:
+    """
+    touch typing_strep_pyo_emm.tsv
+    """
 }
 
 /*
@@ -161,16 +196,21 @@ process ABRICATE_CONCATENATE {
     label 'process_quick'
 
     input:
-        path(reports)
+    path(reports)
 
     output:
         path("typing_staph_aureus_toxins.tsv"), emit: report
 
     script:
-        def input_str = reports instanceof List ? reports.join(" ") : reports
-        """
-        cat ${input_str} | sed 's/#FILE.*//g' | awk 'NF' > typing_staph_aureus_toxins.tsv
-        """
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    cat ${input_str} | sed 's/#FILE.*//g' | awk 'NF' > typing_staph_aureus_toxins.tsv
+    """
+
+    stub:
+    """
+    touch typing_staph_aureus_toxins.tsv
+    """
 }
 
 /*
@@ -181,16 +221,21 @@ process KMERRESISTANCE_CONCATENATE {
     label 'process_quick'
 
     input:
-        path(reports)
+    path(reports)
 
     output:
-        path("amr_kmerresistance_summary.tsv"), emit: report
+    path("amr_kmerresistance_summary.tsv"), emit: report
 
     script:
-        def input_str = reports instanceof List ? reports.join(" ") : reports
-        """
-        grep -H "" ${input_str} | sed 's#.*Score.*##g;s#.KmerRes:#\t#g;s#*NC_007795*##g' | awk 'NF' | sort > amr_kmerresistance_summary.tsv
-        """
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    grep -H "" ${input_str} | sed 's#.*Score.*##g;s#.KmerRes:#\t#g;s#*NC_007795*##g' | awk 'NF' | sort > amr_kmerresistance_summary.tsv
+    """
+
+    stub:
+    """
+    touch amr_kmerresistance_summary.tsv
+    """
 }
 
 /*
@@ -201,14 +246,44 @@ process STARAMR_CONCATENATE {
     label 'process_quick'
 
     input:
-        path(reports, stageAs: "???")
+    path(reports, stageAs: "???")
 
     output:
-        path("amr_staramr_detailed_summary.tsv"), emit: report
+    path("amr_staramr_detailed_summary.tsv"), emit: report
 
     script:
-        def input_str = reports instanceof List ? reports.join(" ") : reports
-        """
-        cat ${input_str} | sed 's#^Isolate.*##g' | awk 'NF' > amr_staramr_detailed_summary.tsv
-        """
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    cat ${input_str} | sed 's#^Isolate.*##g' | awk 'NF' > amr_staramr_detailed_summary.tsv
+    """
+
+    stub:
+    """
+    touch amr_staramr_detailed_summary.tsv
+    """
+}
+
+/*
+ * Concatenate ChroQueTas AMR results from all samples into a single file
+ */
+
+process CHROQUETAS_CONCATENATE {
+    label 'process_quick'
+
+    input:
+    path(reports)
+
+    output:
+    path("amr_chroquetas_summary.tsv"), emit: report
+
+    script:
+    def input_str = reports instanceof List ? reports.join(" ") : reports
+    """
+    grep -H "" *ChroQueTaS.AMR_summary.txt | sed 's#.ChroQueTaS.AMR_summary.txt:#\t#g;s#.*Protein.*##g' | awk 'NF' | sort > amr_chroquetas_summary.tsv
+    """
+
+    stub:
+    """
+    touch amr_chroquetas_summary.tsv
+    """
 }

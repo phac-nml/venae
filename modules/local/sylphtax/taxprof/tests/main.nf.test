@@ -13,7 +13,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "profile.tsv", checkIfExists: true)
                 input[1] = file(params.sylph_tax_bac, checkIfExists: true)
                 input[2] = file(params.sylph_tax_fungi, checkIfExists: true)
                 """
@@ -39,7 +39,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("${projectDir}/tests/test_data/profile.tsv", checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + "profile.tsv", checkIfExists: true)
                 input[1] = file(params.sylph_tax_bac, checkIfExists: true)
                 input[2] = file(params.sylph_tax_fungi, checkIfExists: true)
                 """

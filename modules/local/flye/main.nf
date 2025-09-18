@@ -2,6 +2,7 @@ process FLYE {
     tag "$meta.id"
     label 'process_cpus'
     label 'error_ignore'
+    shell '/bin/bash', '-Cuo', 'pipefail'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -37,6 +38,10 @@ process FLYE {
         --threads \\
         $task.cpus \\
         $args
+
+    echo ""
+    echo "Renaming files..."
+    echo ""
 
     touch assembly.fasta
     mv assembly.fasta ${prefix}_assembly.fasta

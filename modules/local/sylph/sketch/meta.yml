@@ -25,9 +25,6 @@ input:
         type: file
         description: Input fastq files
         pattern: "*.{fq,fastq,fq.gz,fastq.gz}"
-  - - reference:
-        type: file
-        description: Reference genome file in FASTA format
 output:
   - sketch_fastq_genome:
       - meta:
@@ -36,12 +33,6 @@ output:
             Groovy Map containing sample information
             e.g. [ id:'test']
       - my_sketches/*.sylsp:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test', single_end:false ]
-          pattern: "my_sketches/*.sylsp"
-      - database.syldb:
           type: map
           description: |
             Groovy Map containing sample information

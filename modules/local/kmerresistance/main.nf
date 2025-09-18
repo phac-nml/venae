@@ -31,7 +31,7 @@ process KMERRESISTANCE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        kmerresistance: \$(kmerresistance -v | sed -e 's/KmerResistance-//g')
+        kmerresistance: \$(kmerresistance -v 2>&1 >/dev/null | sed -e 's/KmerResistance-//g')
     END_VERSIONS
     """
 
@@ -43,7 +43,7 @@ process KMERRESISTANCE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        kmerresistance: \$(kmerresistance -v | sed -e 's/KmerResistance-//g')
+        kmerresistance: \$(kmerresistance -v 2>&1 >/dev/null | sed -e 's/KmerResistance-//g')
     END_VERSIONS
     """
 }
