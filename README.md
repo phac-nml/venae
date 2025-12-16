@@ -12,6 +12,8 @@
 
 This repository is the product of a GRDI-funded research project entitled **Rapid identification of bacterial and fungal pathogens and resistance determinants directly from positive blood culture bottles using whole genome sequencing, a path towards point of care diagnostics**. Currently, the gold standard for bloodstream infection diagnostics is culturing blood vials followed by phenotypic methods for organism identification and antimicrobial susceptibility testing, which can take days. The significance of early pathogen detection and appropriate antimicrobial therapy for bloodstream infections have major impacts on patient survival; early administration of effective antimicrobials reduces mortality, morbidity, cost of treatment, length of hospital stay, and development of antimicrobial resistance. This project aims to improve the methodologies used for DNA isolation and whole genome sequencing, as well as optimize a bioinformatic pipeline that achieves the highest accuracy results while maintaining short turn around times, with the overall goal to reduce the diagnostic turn around time from days to hours.
 
+Our preprint is accessible on bioRxiv [here](https://doi.org/10.64898/2025.12.12.694010).
+
 ## Big picture overview
 
 **venae** includes a combination of tools that are used to remove host reads, assess quality, perform _de novo_ assembly, identify species (bacteria and fungi), and determine antimicrobial resistance (AMR) genes. Briefly, human reads are removed from samples, subsequently filtered for length, and then submitted to a taxonomic classifier and profiler for species detection. Reads are assembled and contigs are searched against databases of AMR genes. Typing for specific organisms (_emm_ typing for _Streptococcus pyogenes_, and toxin typing for _Staphylococcus aureus_) is included. A final report summarizing sequencing quality, organism identity, and antimicrobial resistance determinants is output in an HTML file.
@@ -122,6 +124,14 @@ Nicole Lerminiaux: nicole.lerminiaux[at]phac-aspc.gc.ca or nml.arni-rain.lnm[at]
 Contributions are welcome through creating pull requests or issues. If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## Citations
+
+Our preprint is accessible here:
+
+> Nicole Lerminiaux, Ken Fakharuddin, Heather J Adam, Amrita Bharat, George R Golding, Irene Martin, Michael Mulvey, & Laura Mataseje.
+>
+> Rapid identification of microbial pathogens and antimicrobial resistance from bloodstream infections using long-read sequencing.
+>
+> 2025 Dec 15. bioRxiv, doi: https://doi.org/10.64898/2025.12.12.694010
 
 Detailed citations for included tools can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
