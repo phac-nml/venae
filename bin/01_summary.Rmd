@@ -269,7 +269,14 @@ if(!file.exists(params$chroquetas) || file.size((params$chroquetas)) == 0){
 
 # join ChroQueTas to sample info/all and concat phenotypes
 all2 <- left_join(all, df3, by = "sample") %>%
-  mutate(phenotype = paste(cge_phenotype, fungamr_phenotype, sep = ", ")) %>%
+  #mutate(phenotype = paste(cge_phenotype, fungamr_phenotype, sep = ", ")) %>%
+  mutate(phenotype = case_when(
+    is.na(cge_phenotype) & is.na(fungamr_phenotype) ~ NA,
+    is.na(cge_phenotype) & fungamr_phenotype == "None detected" ~ "None detected",
+    cge_phenotype == "None detected" & is.na(fungamr_phenotype) ~ "None detected",
+    cge_phenotype == "None detected" & fungamr_phenotype == "None detected" ~ "None detected",
+    TRUE ~ paste(cge_phenotype, fungamr_phenotype, sep = ", "))
+    ) %>%
   mutate(phenotype = str_remove_all(phenotype, ", NA|NA, |, None detected|None detected, ")) %>%
   select(!c("cge_phenotype", "fungamr_phenotype"))
 all2$phenotype <- sapply(strsplit(all2$phenotype, ", ", fixed = TRUE), function(x) paste(unique(sort(x)), collapse = ", "))
