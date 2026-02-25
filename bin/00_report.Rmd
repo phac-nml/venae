@@ -91,14 +91,14 @@ source(("functions.R"))
   - More than `r as.integer(params$sppproportion)` % of reads and more than `r as.integer(params$minreadnumqc)` reads total mapped to one species
   - Median read length was > `r as.integer(params$minreadlength)` bases
   - Median read quality Q-score was < `r as.integer(params$minreadqscore)`
-- Assemblies were generated with [Flye v2.9.4](https://github.com/fenderglass/Flye) using reads that were >1 kb in length
+- Assemblies were generated with [metaFlye v2.9.4](https://github.com/fenderglass/Flye) using reads that were >1 kb in length
 - Species identification was performed with the following tools using reads that were >2 kb in length:
   - Level 1 identification for evaluting samples with low read counts: [Kraken2 v2.1.4](https://github.com/DerrickWood/kraken2) using the plusPF-2024-09-04-16Gb database
   - Level 2 identification for evaluating samples with high read counts for more accurate polymicrobial identification: [Sylph v0.8.0](https://github.com/bluenote-1577/sylph) using the bacteria dbv1 GTDB r220 (113,104 genomes 2024-04-24) database and the fungal RefSeq v0.3 -c200 2024-07-25 (595 genomes) database
 <!---    - [Metabuli v1.0.8](https://github.com/steineggerlab/Metabuli) using a custom database with all RefSeq complete & chromosome fungi & bacteria plus human genome GRCh38.p14 (49684 bacteria and 130 fungi, built 2024-10-29) --->
 - Antimicrobial resistance gene detection was performed using the following tools and required a minimum > 90% identity to the reference gene:
   - [StarAMR v0.11.0](https://github.com/phac-nml/staramr) using the following databases: ResFinder Tue, 24 May 2022 06:51 (db commit fa32d9a3cf0c12ec70ca4e90c45c0d590ee810bd), PlasmidFinder Wed, 18 Jan 2023 09:45 (c18e08c17a5988d4f075fc1171636e47546a323d), MLST v2.23.0
-  - [kmerResistance v2.2.0](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/) using the ResFinder v2.4.0 (2024-08-06) database and the KmerFinder bacteria 2024-01-30 database
+  - [kmerResistance v2.2.0](https://bitbucket.org/genomicepidemiology/kmerresistance/src/master/) using the ResFinder database v2.4.0 (2024-08-06)  
   - [ChroQueTas v1.0.0](https://github.com/nmquijada/ChroQueTas) using the FungAMR database v1.0.0 (June 2025)
 - *Staphylococcus aureus* isolates were screened for the following toxin genes: *eta*, *etb*, *tsst-1*, *sea*, *seb*, *sec*, *sed*, *see*, *seh*, *selk*, *sell*, *selq*, *lukK* and *lukS* using the following tool with a minimum > 80% identity to the reference gene:
   - [VFDB via ABRicate v1.0.1](https://github.com/tseemann/abricate) using database 2024-10-29 (4370 sequences)
