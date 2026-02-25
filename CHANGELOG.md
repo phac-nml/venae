@@ -3,6 +3,25 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.2.2 (February 2026)
+
+This release fixed minor bugs in the report and updated the Methods text printed in the report.
+
+### Fixed:
+
+- Fix bug concatenating StarAMR and ChroQueTas results into Summary table in the report
+- Fix bug printing ChroQueTas AMR table in report when there are assemblies but no hits
+- Fix bug printing empty string for predicted phenotype in Summary table in the report
+- Fix typo in AMR section of the report
+
+### Added:
+
+- Add `meta` to `Flye v2.9.4` in the Methods text in the report
+
+### Removed:
+
+- Remove KmerFinder bacteria database reference for KmerResistance in Methods text in the report
+
 ## v0.2.1 (September 2025)
 
 This release added ChroQueTas (fungi AMR tool) to the workflow & report which will run if fungi organisms are detected
