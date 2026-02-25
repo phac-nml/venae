@@ -269,7 +269,6 @@ if(!file.exists(params$chroquetas) || file.size((params$chroquetas)) == 0){
 
 # join ChroQueTas to sample info/all and concat phenotypes
 all2 <- left_join(all, df3, by = "sample") %>%
-  #mutate(phenotype = paste(cge_phenotype, fungamr_phenotype, sep = ", ")) %>%
   mutate(phenotype = case_when(
     is.na(cge_phenotype) & is.na(fungamr_phenotype) ~ NA,
     is.na(cge_phenotype) & fungamr_phenotype == "None detected" ~ "None detected",
@@ -289,7 +288,7 @@ all_qc <- left_join(all2, read, by = "sample") %>%
   mutate(qc = ifelse((!is.na(organism) & organism != "NA" & !str_detect(organism, "\\*")) & median_read_length > as.integer(params$minreadlength) &  median_qual > as.integer(params$minreadqscore) & number_of_reads > as.integer(params$minreadnumqc), "pass", "fail"))  %>%
   select(Sample = sample, Organism = organism, `Polymicrobial` = poly, `QC` = qc, `Predicted resistance phenotype` = phenotype) %>%
   mutate(`QC` = ifelse(`QC` == "fail", cell_spec(`QC`, "html", color = "#F8766D", bold = TRUE), cell_spec(`QC`, "html", color = "#00BFC4", bold = TRUE))) %>%
-  mutate(`Predicted resistance phenotype` = ifelse(`Predicted resistance phenotype` == "NA" | is.na(`Predicted resistance phenotype`), "Could not predict", `Predicted resistance phenotype`))
+  mutate(`Predicted resistance phenotype` = ifelse(`Predicted resistance phenotype` == "NA" | is.na(`Predicted resistance phenotype`) | `Predicted resistance phenotype` == "", "Could not predict", `Predicted resistance phenotype`))
 
 # add footnotes
 names(all_qc)[2] <- paste0(names(all_qc)[2], footnote_marker_symbol(1))
