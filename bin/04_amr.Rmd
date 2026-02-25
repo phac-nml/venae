@@ -55,7 +55,7 @@ fungi <- import_fungi_list((params$fungi))
 ## ANTIMICROBIAL RESISTANCE  {-}
 
 
-`r if(length(failed_samples) == 0 ){"All samples had enough reads for assembly-based antmicrobial resistance gene detection."} else {paste("**NOTE**: The following sample(s) did not have enough reads for assembly-based antimicrobial resistance gene detection:", paste(unlist(failed %>% pull(sample)), collapse=", "))}`
+`r if(length(failed_samples) == 0 ){"All samples had enough reads for assembly-based antimicrobial resistance gene detection."} else {paste("**NOTE**: The following sample(s) did not have enough reads for assembly-based antimicrobial resistance gene detection:", paste(unlist(failed %>% pull(sample)), collapse=", "))}`
 
 ### StarAMR (bacteria, assembly-based) {-}
 
@@ -182,7 +182,7 @@ if(length(fungi) == 0){
   }
 
   # If no AMR genes run on any samples
-  if(file.exists(params$chroquetas) && file.size((params$chroquetas)) == 0){
+  if(!file.exists(params$chroquetas) || file.size((params$chroquetas)) == 0){
 
     # if there are only valid samples, print list with no AMR genes
     if(dim(fungi_samples)[1] != 0){
